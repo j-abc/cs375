@@ -68,19 +68,24 @@ def smaller_model(inputs, train = True, norm = True, **kwargs):
     ### YOUR CODE HERE
 
     # set up all layer outputs
-    outputs['conv1'],outputs['conv1_kernel']  = conv(outputs['images'], 48, 11, 4, padding='VALID', layer = 'conv1')
-    # if norm:
-        # m.lrn(depth_radius=5, bias=1, alpha=.0001, beta=.75, layer='conv1')
-    outputs['pool1'] = max_pool(outputs['conv1'], 3, 2, layer = 'pool1')
-    outputs['conv2'],outputs['conv2_kernel'] = conv(outputs['pool1'], 128, 5, 1, layer = 'conv2')
-    # if norm:
-        # m.lrn(depth_radius=5, bias=1, alpha=.0001, beta=.75, layer='conv2')
-    outputs['pool2'] = max_pool(outputs['conv2'], 3, 2, layer = 'pool2')
-
+    # set up all layer outputs
+    outputs['conv1'],outputs['conv1_kernel']  = conv(outputs['images'], 96, 11, 4, padding='VALID', layer = 'conv1')
+    lrn1 = outputs['conv1']
+    if norm:
+        lrn1 = lrn(outputs['conv1'], depth_radius=5, bias=1, alpha=.0001, beta=.75, layer='conv1')
+    outputs['pool1'] = max_pool(lrn1, 3, 2, layer = 'pool1')
+    
+    
+    outputs['conv2'], outputs['conv2_kernel'] = conv(outputs['pool1'], 256, 5, 1, layer = 'conv2')
+    lrn2 = outputs['conv2']
+    if norm:
+        lrn2 = lrn(outputs['conv2'], depth_radius=5, bias=1, alpha=.0001, beta=.75, layer='conv2')
+        
+    outputs['pool2'] = max_pool(lrn2, 3, 2, layer = 'pool2')
     outputs['conv3'],outputs['conv3_kernel'] = conv(outputs['pool2'], 192, 3, 1, layer = 'conv3')
-    outputs['pool3'] = max_pool(outputs['conv5'], 3, 2, layer = 'pool3')
+    outputs['pool3'] = max_pool(outputs['conv3'], 3, 2, layer = 'pool3')
 
-    outputs['fc6'] = fc(outputs['pool5'], 4096, dropout=dropout, bias=.1, layer = 'fc6')
+    outputs['fc6'] = fc(outputs['pool3'], 4096, dropout=dropout, bias=.1, layer = 'fc6')
     outputs['fc7'] = fc(outputs['fc6'], 4096, dropout=dropout, bias=.1, layer = 'fc7')
     outputs['fc8'] = fc(outputs['fc7'],1000, activation=None, dropout=None, bias=0, layer = 'fc8')
 
@@ -97,9 +102,9 @@ def smaller_model(inputs, train = True, norm = True, **kwargs):
     #                         name='weights')
     ### END OF YOUR CODE
 
-    for k in ['conv1', 'conv2', 'conv3', 'conv4', 'conv5', 'pool1',
-            'pool2', 'pool5', 'fc6', 'fc7', 'fc8', 'conv1_kernel', 'pred']:
-        assert k in outputs, '%s was not found in outputs' % k
+    #for k in ['conv1', 'conv2', 'conv3', 'conv4', 'conv5', 'pool1',
+    #        'pool2', 'pool5', 'fc6', 'fc7', 'fc8', 'conv1_kernel', 'pred']:
+    #    assert k in outputs, '%s was not found in outputs' % k
     return outputs, {}     
 
 def alexnet_model(inputs, train=True, norm=True, **kwargs):
@@ -148,13 +153,18 @@ def alexnet_model(inputs, train=True, norm=True, **kwargs):
 
     # set up all layer outputs
     outputs['conv1'],outputs['conv1_kernel']  = conv(outputs['images'], 96, 11, 4, padding='VALID', layer = 'conv1')
-    # if norm:
-        # m.lrn(depth_radius=5, bias=1, alpha=.0001, beta=.75, layer='conv1')
-    outputs['pool1'] = max_pool(outputs['conv1'], 3, 2, layer = 'pool1')
-    outputs['conv2'],outputs['conv2_kernel'] = conv(outputs['pool1'], 256, 5, 1, layer = 'conv2')
-    # if norm:
-        # m.lrn(depth_radius=5, bias=1, alpha=.0001, beta=.75, layer='conv2')
-    outputs['pool2'] = max_pool(outputs['conv2'], 3, 2, layer = 'pool2')
+    lrn1 = outputs['conv1']
+    if norm:
+        lrn1 = lrn(outputs['conv1'], depth_radius=5, bias=1, alpha=.0001, beta=.75, layer='conv1')
+    outputs['pool1'] = max_pool(lrn1, 3, 2, layer = 'pool1')
+    
+    
+    outputs['conv2'], outputs['conv2_kernel'] = conv(outputs['pool1'], 256, 5, 1, layer = 'conv2')
+    lrn2 = outputs['conv2']
+    if norm:
+        lrn2 = lrn(outputs['conv2'], depth_radius=5, bias=1, alpha=.0001, beta=.75, layer='conv2')
+
+    outputs['pool2'] = max_pool(lrn2, 3, 2, layer = 'pool2')
     outputs['conv3'],outputs['conv3_kernel'] = conv(outputs['pool2'], 384, 3, 1, layer = 'conv3')
     outputs['conv4'],outputs['conv4_kernel'] = conv(outputs['conv3'], 384, 3, 1, layer = 'conv4')
     outputs['conv5'],outputs['conv5_kernel'] = conv(outputs['conv4'], 256, 3, 1, layer = 'conv5')
@@ -240,12 +250,12 @@ def conv(inp,
     return output, kernel
 
 def max_pool(x, ksize, strides,  name='pool', padding='SAME', layer = None):
-  with tf.variable_scope(layer):
-      if isinstance(ksize, int):
-          ksize = [ksize, ksize]
-      if isinstance(strides, int):
-          strides = [1, strides, strides, 1]
-  return tf.nn.max_pool(x, ksize= [1, ksize[0], ksize[1],1],
+    with tf.variable_scope(layer):
+        if isinstance(ksize, int):
+            ksize = [ksize, ksize]
+        if isinstance(strides, int):
+            strides = [1, strides, strides, 1]
+    return tf.nn.max_pool(x, ksize= [1, ksize[0], ksize[1],1],
                         strides = strides,
                         padding = padding, name = name)
 
@@ -303,3 +313,16 @@ def initializer(kind='xavier', *args, **kwargs):
     else:
         init = getattr(tf, kind + '_initializer')(*args, **kwargs)
     return init
+
+
+def lrn(inp,
+    depth_radius=5, 
+    bias=1, 
+    alpha=.0001, 
+    beta=.75, 
+    name = 'lrn',
+    layer = None):
+    with tf.variable_scope(layer):
+        lrn = tf.nn.local_response_normalization(inp, depth_radius = depth_radius, alpha = alpha,
+                                            beta = beta, bias = bias, name = name)
+    return lrn
