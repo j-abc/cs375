@@ -23,6 +23,85 @@ import os
 import numpy as np
 import tensorflow as tf
 
+def smaller_model(inputs, train = True, norm = True, **kwargs):
+    """
+    AlexNet model definition as defined in the paper:
+    https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf
+
+    You will need to EDIT this function. Please put your AlexNet implementation here.
+
+    Note:
+    1.) inputs['images'] is a [BATCH_SIZE x HEIGHT x WIDTH x CHANNELS] array coming
+    from the data provider.
+    2.) You will need to return 'output' which is a dictionary where
+    - output['pred'] is set to the output of your model
+    - output['conv1'] is set to the output of the conv1 layer
+    - output['conv1_kernel'] is set to conv1 kernels
+    - output['conv2'] is set to the output of the conv2 layer
+    - output['conv2_kernel'] is set to conv2 kernels
+    - and so on...
+    The output dictionary should include the following keys for AlexNet:
+    ['conv1', 'conv2', 'conv3', 'conv4', 'conv5', 'pool1',
+     'pool2', 'pool5', 'fc6', 'fc7', 'fc8']
+    as well as the respective ['*_kernel'] keys for the kernels
+    3.) Set your variable scopes to the name of the respective layers, e.g.
+        with tf.variable_scope('conv1'):
+            outputs['conv1'] = ...
+            outputs['pool1'] = ...
+    and
+        with tf.variable_scope('fc6'):
+            outputs['fc6'] = ...
+    and so on.
+    4.) Use tf.get_variable() to create variables, while setting name='weights'
+    for each kernel, and name='bias' for each bias for all conv and fc layers.
+    For the pool layers name='pool'.
+
+    These steps are necessary to correctly load the pretrained alexnet model
+    from the database for the second part of the assignment.
+    """
+
+    # propagate input targets
+    outputs = inputs
+    dropout = .5 if train else None
+    input_to_network = inputs['images']
+
+    ### YOUR CODE HERE
+
+    # set up all layer outputs
+    outputs['conv1'],outputs['conv1_kernel']  = conv(outputs['images'], 48, 11, 4, padding='VALID', layer = 'conv1')
+    # if norm:
+        # m.lrn(depth_radius=5, bias=1, alpha=.0001, beta=.75, layer='conv1')
+    outputs['pool1'] = max_pool(outputs['conv1'], 3, 2, layer = 'pool1')
+    outputs['conv2'],outputs['conv2_kernel'] = conv(outputs['pool1'], 128, 5, 1, layer = 'conv2')
+    # if norm:
+        # m.lrn(depth_radius=5, bias=1, alpha=.0001, beta=.75, layer='conv2')
+    outputs['pool2'] = max_pool(outputs['conv2'], 3, 2, layer = 'pool2')
+
+    outputs['conv3'],outputs['conv3_kernel'] = conv(outputs['pool2'], 192, 3, 1, layer = 'conv3')
+    outputs['pool3'] = max_pool(outputs['conv5'], 3, 2, layer = 'pool3')
+
+    outputs['fc6'] = fc(outputs['pool5'], 4096, dropout=dropout, bias=.1, layer = 'fc6')
+    outputs['fc7'] = fc(outputs['fc6'], 4096, dropout=dropout, bias=.1, layer = 'fc7')
+    outputs['fc8'] = fc(outputs['fc7'],1000, activation=None, dropout=None, bias=0, layer = 'fc8')
+
+    outputs['pred'] = outputs['fc8']
+    
+    # provide access to kernels themselves
+    #for key, value in outputs.iteritems():
+    #    outputs[key + '_kernel'] = tf.get_default_graph().get_tensor_by_name('model_0/' + )
+
+    # kernel = tf.get_variable(initializer=init,
+    #                         shape=[ksize[0], ksize[1], in_depth, out_depth],
+    #                         dtype=tf.float32,
+    #                         regularizer=tf.contrib.layers.l2_regularizer(weight_decay),
+    #                         name='weights')
+    ### END OF YOUR CODE
+
+    for k in ['conv1', 'conv2', 'conv3', 'conv4', 'conv5', 'pool1',
+            'pool2', 'pool5', 'fc6', 'fc7', 'fc8', 'conv1_kernel', 'pred']:
+        assert k in outputs, '%s was not found in outputs' % k
+    return outputs, {}     
+
 def alexnet_model(inputs, train=True, norm=True, **kwargs):
     """
     AlexNet model definition as defined in the paper:
@@ -86,7 +165,7 @@ def alexnet_model(inputs, train=True, norm=True, **kwargs):
     outputs['fc8'] = fc(outputs['fc7'],1000, activation=None, dropout=None, bias=0, layer = 'fc8')
 
     outputs['pred'] = outputs['fc8']
-
+    
     # provide access to kernels themselves
     #for key, value in outputs.iteritems():
     #    outputs[key + '_kernel'] = tf.get_default_graph().get_tensor_by_name('model_0/' + )
