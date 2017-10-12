@@ -211,7 +211,7 @@ class ImageNetExperiment():
         params['loss_params'] = {
             'targets': ['labels'],
             'agg_func': tf.reduce_mean,
-            'loss_per_case_func': self.loss_per_case_func,
+            'loss_per_case_func': loss_per_case_func,
             'loss_per_case_func_params' : {'_outputs': 'outputs', 
                 '_targets_$all': 'inputs'},
             'loss_func_kwargs' : {},
@@ -235,14 +235,15 @@ class ImageNetExperiment():
         4.) You will need to delete all keys except for 'func' and replace them
         with the input arguments to 
         """
+        def piecewise_constant_wrapper(global_step, boundaries, values):
+            return tf.train.piecewise_constant(global_step, boundaries, values)
         
+        # we fill in global step outside of this!
         params['learning_rate_params'] = {
-            'func': tf.train.piecewise_constant,
-            'x': , tf.Variable(0, trainable=False)
+            'func': piecewise_constant_wrapper,
             'boundaries': list(np.array([150000, 300000, 450000]).astype(np.int64)),
             'values': [0.01, 0.005, 0.001, 0.0005]
         }
-
         """
         optimizer_params defines the optimizer.
 
@@ -312,8 +313,8 @@ class ImageNetExperiment():
         You will need to EDIT this part. Implement the top1 and top5 functions
         in the respective dictionary entry.
         """
-        return {'top1': tf.nn.in_top_k(outputs, inputs[target], 1),
-                'top5': tf.nn.in_top_k(outputs, inputs[target], 5)}
+        return {'top1': tf.nn.in_top_k(outputs, inputs['labels'], 1),
+                'top5': tf.nn.in_top_k(outputs, inputs['labels'], 5)}
 
 
     def subselect_tfrecords(self, path):
@@ -336,11 +337,6 @@ class ImageNetExperiment():
             retval[target] = outputs[target]
         return retval
 
-    def loss_per_case_func(self, inputs, outputs):
-        labels = outputs['labels']
-        logits = outputs['pred']
-        return tf.nn.sparse_softmax_cross_entropy_with_logits(labels=labels, logits=logits)
-
     def online_agg_mean(self, agg_res, res, step):
         """
         Appends the mean value for each key
@@ -351,6 +347,12 @@ class ImageNetExperiment():
             agg_res[k].append(np.mean(v))
         return agg_res
 
+    
+def loss_per_case_func(inputs, outputs):
+    labels = outputs['labels']
+    logits = outputs['pred']
+    return tf.nn.sparse_softmax_cross_entropy_with_logits(labels=labels, logits=logits)
+    
 if __name__ == '__main__':
     """
     Illustrates how to run the configured model using tfutils

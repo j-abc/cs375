@@ -68,17 +68,17 @@ def alexnet_model(inputs, train=True, norm=True, **kwargs):
     ### YOUR CODE HERE
 
     # set up all layer outputs
-    outputs['conv1'] = conv(outputs['images'], 96, 11, 4, padding='VALID', layer = 'conv1')
+    outputs['conv1'],outputs['conv1_kernel']  = conv(outputs['images'], 96, 11, 4, padding='VALID', layer = 'conv1')
     # if norm:
         # m.lrn(depth_radius=5, bias=1, alpha=.0001, beta=.75, layer='conv1')
     outputs['pool1'] = max_pool(outputs['conv1'], 3, 2, layer = 'pool1')
-    outputs['conv2'] = conv(outputs['pool1'], 256, 5, 1, layer = 'conv2')
+    outputs['conv2'],outputs['conv2_kernel'] = conv(outputs['pool1'], 256, 5, 1, layer = 'conv2')
     # if norm:
         # m.lrn(depth_radius=5, bias=1, alpha=.0001, beta=.75, layer='conv2')
     outputs['pool2'] = max_pool(outputs['conv2'], 3, 2, layer = 'pool2')
-    outputs['conv3'] = conv(outputs['pool2'], 384, 3, 1, layer = 'conv3')
-    outputs['conv4'] = conv(outputs['conv3'], 384, 3, 1, layer = 'conv4')
-    outputs['conv5'] = conv(outputs['conv4'], 256, 3, 1, layer = 'conv5')
+    outputs['conv3'],outputs['conv3_kernel'] = conv(outputs['pool2'], 384, 3, 1, layer = 'conv3')
+    outputs['conv4'],outputs['conv4_kernel'] = conv(outputs['conv3'], 384, 3, 1, layer = 'conv4')
+    outputs['conv5'],outputs['conv5_kernel'] = conv(outputs['conv4'], 256, 3, 1, layer = 'conv5')
     outputs['pool5'] = max_pool(outputs['conv5'], 3, 2, layer = 'pool5')
 
     outputs['fc6'] = fc(outputs['pool5'], 4096, dropout=dropout, bias=.1, layer = 'fc6')
@@ -88,8 +88,8 @@ def alexnet_model(inputs, train=True, norm=True, **kwargs):
     outputs['pred'] = outputs['fc8']
 
     # provide access to kernels themselves
-    for key, value in outputs.iteritems():
-        outputs[key + '_kernel'] = value.weights
+    #for key, value in outputs.iteritems():
+    #    outputs[key + '_kernel'] = tf.get_default_graph().get_tensor_by_name('model_0/' + )
 
     # kernel = tf.get_variable(initializer=init,
     #                         shape=[ksize[0], ksize[1], in_depth, out_depth],
@@ -102,6 +102,7 @@ def alexnet_model(inputs, train=True, norm=True, **kwargs):
             'pool2', 'pool5', 'fc6', 'fc7', 'fc8', 'conv1_kernel', 'pred']:
         assert k in outputs, '%s was not found in outputs' % k
     return outputs, {}
+        #    return outputs['pred'], {}
 
 def conv(inp,
          out_depth,
@@ -113,7 +114,7 @@ def conv(inp,
          bias=0,
          weight_decay=None,
          activation='relu',
-         batch_norm=True,
+         batch_norm=False,
          name='conv',
          layer = None,
          ):
@@ -123,6 +124,10 @@ def conv(inp,
             weight_decay = 0.
         if isinstance(ksize, int):
             ksize = [ksize, ksize]
+            
+        if isinstance(strides, int):
+            strides = [1, strides, strides, 1]            
+            
         if kernel_init_kwargs is None:
             kernel_init_kwargs = {}
         in_depth = inp.get_shape().as_list()[-1]
@@ -153,7 +158,7 @@ def conv(inp,
         if batch_norm:
             output = tf.nn.batch_normalization(output, mean=0, variance=1, offset=None,
                                 scale=None, variance_epsilon=1e-8, name='batch_norm')
-    return output
+    return output, kernel
 
 def max_pool(x, ksize, strides,  name='pool', padding='SAME', layer = None):
   with tf.variable_scope(layer):
@@ -161,7 +166,7 @@ def max_pool(x, ksize, strides,  name='pool', padding='SAME', layer = None):
           ksize = [ksize, ksize]
       if isinstance(strides, int):
           strides = [1, strides, strides, 1]
-  return tf.nn.max_pool(x, ksize= ksize,
+  return tf.nn.max_pool(x, ksize= [1, ksize[0], ksize[1],1],
                         strides = strides,
                         padding = padding, name = name)
 
@@ -175,7 +180,8 @@ def fc(inp,
        batch_norm=True,
        dropout=None,
        dropout_seed=None,
-       name='fc'):
+       name='fc',
+       layer='blah'):
     with tf.variable_scope(layer):
         if weight_decay is None:
             weight_decay = 0.
