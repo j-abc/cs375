@@ -313,8 +313,8 @@ class ImageNetExperiment():
         You will need to EDIT this part. Implement the top1 and top5 functions
         in the respective dictionary entry.
         """
-        return {'top1': tf.nn.in_top_k(outputs, inputs['labels'], 1),
-                'top5': tf.nn.in_top_k(outputs, inputs['labels'], 5)}
+        return {'top1': tf.nn.in_top_k(outputs['pred'], inputs['labels'], 1),
+                'top5': tf.nn.in_top_k(outputs['pred'], inputs['labels'], 5)}
 
 
     def subselect_tfrecords(self, path):
