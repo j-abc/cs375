@@ -1,14 +1,21 @@
 ## TODO
 
 ### Part 1
-- Implement 1-Stream Variant of AlexNet (tfutils.model.alexnet ?)
-- Implement one or more smaller variants of deep neural network, with fewer layers and fewer filters per layer
+- Implement 1-Stream Variant of AlexNet (tfutils.model.alexnet ?) [DONE]
+- Implement one or more smaller variants of deep neural network, with fewer layers and fewer filters per layer (LeNet adapted to ImageNet)
 - Implement Inception v3 or VGG
-- Edit `train_imagenet.py` (basically configuration)
+- implement a hard-coded 1-layer CNN where the filter kernels are a fixed (untrained) Gabor filterbank, implemented as a Tensorflow model.
+- Edit `train_imagenet.py` (basically configuration).
+
+### Part 2
+- 
+-
+-
+-
 
 AlexNet Reqs:
 
-| Requirement | Satisfied?|
+| Architecture Requirement | Satisfied?|
 |-----|-----|
 |the net contains eight layers with weights; the first five are convolutional and the remaining three are fully- connected | Yes |
 | output of the last fully-connected layer is fed to a 1000-way softmax which produces a distribution over the 1000 class labels. | No |
@@ -24,3 +31,14 @@ AlexNet Reqs:
 | The fourth convolutional layer has 384 kernels of size 3 × 3 × 192 | Yes |
 | the fifth convolutional layer has 256 kernels of size 3×3×192 | Yes |
 | The fully-connected layers have 4096 neurons each. | Yes | 
+
+| Training Requirement | Satisfied?|
+|-----|-----|
+| We employ two distinct forms of data augmentation, both of which allow transformed images to be produced from the original images with very little computation | Unlikely...|
+| The recently-introduced technique, called “dropout” [10], consists of setting to zero the output of each hidden neuron with probability 0.5. | Yes |  
+| At test time, we use all the neurons but multiply their outputs by 0.5 | No (not sure we need to) | 
+| stochastic gradient descent with a batch size of 128 examples | No (we use 256) |
+| momentum of 0.9 | Yes | 
+| weight decay of 0.0005 | No (the excercise asks for a piecewise linear) |
+| heuristic which we followed was to divide the learning rate by 10 when the validation error rate stopped improving with the current learning rate. The learning rate was initialized at 0.01 and reduced three times prior to termination. | No (the excercise asks for a piecewise linear) | 
+| We trained the network for roughly 90 cycles through the training set of 1.2 million images | Yes | 
