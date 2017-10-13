@@ -233,7 +233,19 @@ class NeuralDataExperiment():
         """
         print('Categorization test...')
         category_eval_spec = {
-            EDIT_YOUR_SPEC_HERE
+            'npc_train': None,
+            'npc_test': 2,
+            'num_splits': 20,
+            'npc_validate': 0,
+            'metric_screen': 'classifier',
+            'metric_labels': None,
+            'metric_kwargs': {'model_type': 'svm.LinearSVC',
+                              'model_kwargs': {'C':5e-3}
+                             },
+            'labelfunc': 'category',
+            'train_q': {'var': ['V0', 'V3', 'V6']},
+            'test_q': {'var': ['V0', 'V3', 'V6']},
+            'split_by': 'obj'
         }
         res = compute_metric_base(features, meta, category_eval_spec)
         res.pop('split_results')
@@ -249,7 +261,19 @@ class NeuralDataExperiment():
         """
         print('Regression test...')
         it_reg_eval_spec = {
-            EDIT_YOUR_SPEC_HERE
+            'npc_train': None,
+            'npc_test': 2,
+            'num_splits': 20,
+            'npc_validate': 0,
+            'metric_screen': 'classifier',
+            'metric_labels': None,
+            'metric_kwargs': {
+                'model_type': 'linear_model.RidgeCV',
+                             },
+            'labelfunc': 'ty',
+            'train_q': {'var': ['V0', 'V3', 'V6']},
+            'test_q': {'var': ['V0', 'V3', 'V6']},
+            'split_by': 'obj'
         }
         res = compute_metric_base(features, meta, it_reg_eval_spec)
         espec = (('all','','IT_regression'), it_reg_eval_spec)
@@ -276,7 +300,7 @@ class NeuralDataExperiment():
             features = np.array([features[(meta['obj'] == o.rstrip('_'))].mean(0) \
                     for o in object_list])
         ### YOUR CODE HERE
-        rdm = EDIT_YOUR_CODE_HERE
+        rdm = 1 - np.corrcoef(features)
         ### END OF YOUR CODE
         return rdm
 

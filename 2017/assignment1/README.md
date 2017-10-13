@@ -2,9 +2,9 @@
 
 ### Part 1
 - Implement 1-Stream Variant of AlexNet (tfutils.model.alexnet ?) [DONE]
-- Implement one or more smaller variants of deep neural network, with fewer layers and fewer filters per layer (LeNet adapted to ImageNet)
+- Implement one or more smaller variants of deep neural network, with fewer layers and fewer filters per layer (LeNet adapted to ImageNet) [DONE]
 - Implement Inception v3 or VGG
-- implement a hard-coded 1-layer CNN where the filter kernels are a fixed (untrained) Gabor filterbank, implemented as a Tensorflow model.
+- implement a hard-coded 1-layer CNN where the filter kernels are a fixed (untrained) Gabor filterbank, implemented as a Tensorflow model.[DONE]
 - Edit `train_imagenet.py` (basically configuration). [DONE]
 
 ### Part 2
