@@ -5,7 +5,7 @@
 - Implement one or more smaller variants of deep neural network, with fewer layers and fewer filters per layer (LeNet adapted to ImageNet)
 - Implement Inception v3 or VGG
 - implement a hard-coded 1-layer CNN where the filter kernels are a fixed (untrained) Gabor filterbank, implemented as a Tensorflow model.
-- Edit `train_imagenet.py` (basically configuration).
+- Edit `train_imagenet.py` (basically configuration). [DONE]
 
 ### Part 2
 - 
@@ -13,7 +13,7 @@
 -
 -
 
-AlexNet Reqs:
+### AlexNet Reqs:
 
 | Architecture Requirement | Satisfied?|
 |-----|-----|
@@ -42,3 +42,22 @@ AlexNet Reqs:
 | weight decay of 0.0005 | No (the excercise asks for a piecewise linear) |
 | heuristic which we followed was to divide the learning rate by 10 when the validation error rate stopped improving with the current learning rate. The learning rate was initialized at 0.01 and reduced three times prior to termination. | No (the excercise asks for a piecewise linear) | 
 | We trained the network for roughly 90 cycles through the training set of 1.2 million images | Yes | 
+
+### V1 Reqs:
+
+| Architecture Requirement | Satisfied?|
+|-----|-----|
+| Image preparation. First we converted the input image to grayscale |  Yes |
+| resized by bicubic interpolation the largest edge to a fixed size (150 pixels for Caltech datasets) while preserving its aspect ratio. | N/A |
+| The mean was subtracted from the resulting two-dimensional image and we divided it by its standard deviation | No |
+| For each pixel in the input image, we
+subtracted themean of the pixel values in a fixed window (333pixels, centered on the pixel), and we divided this value by the euclidean norm of the resulting 9-dimensional vector (333 window) if the norm was greater than 1 | Used the already implemented LRN instead |
+| Linear filtering with a set of Gabor filters. We convolved the normalized
+images with a set of two-dimensional Gabor filters of fixed size (433 43 pixels), spanning 16 orientations (equally spaced around the clock) and six spatial frequencies (1/2, 1/3, 1/4, 1/6, 1/11, 1/18 cycles/pixel) with a fixed Gaussian envelope (standard deviation of 9 cycles/pixel in
+both directions) and fixed phase (0) for a total of N¼96 filters | Yes |
+|Each filter had zero-mean and euclidean norm of one  | No | 
+| Thresholding and saturation. The output of each Gabor filter was
+passed through a standard output non-linearity—a threshold and response saturation.|  ReLu instead| 
+| The result of the Gabor filtering
+was a three-dimensional matrix of size H3W3 N where each two- dimensional slice (H3W) is the output of each Gabor filter type. For each filter output, we subtracted the mean of filter outputs in a fixed spatial window (3 3 3 pixels, centered) across all orientations and spatial scales (total of 864 elements).| Implemented LRN instead | 
+| the dimensionality- reduced training data were used to train a linear support vector machine (SVM) using libsvm-2.82 [32] | Used three fully connected layers instead. |
