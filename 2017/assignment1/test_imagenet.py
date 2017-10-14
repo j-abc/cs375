@@ -262,16 +262,16 @@ class NeuralDataExperiment():
         """
         print('Regression test...')
         it_reg_eval_spec = {
-            'npc_train': None,
-            'npc_test': 2,
-            'num_splits': 20,
+            'npc_train': 70,
+            'npc_test': 10,
+            'num_splits': 5,
             'npc_validate': 0,
-            'metric_screen': 'classifier',
+            'metric_screen': 'regression',
             'metric_labels': None,
             'metric_kwargs': {
                 'model_type': 'linear_model.RidgeCV',
                              },
-            'labelfunc': 'ty',
+            'labelfunc': lambda x: (IT_features, None),
             'train_q': {'var': ['V0', 'V3', 'V6']},
             'test_q': {'var': ['V0', 'V3', 'V6']},
             'split_by': 'obj'
