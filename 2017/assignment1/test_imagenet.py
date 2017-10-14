@@ -58,19 +58,20 @@ class NeuralDataExperiment():
         You will have to EDIT this part. Please set your exp_id here.
         """
         target_layers = ['pool1', 
-                         'conv2', 
+                         'pool2', 
                          'conv3', 
                          'conv4', 
                          'conv5', 
                          'pool5', 
                          'fc6', 
-                         'fc7']
+                         'fc7',
+                         'fc8']
         extraction_step = None
         exp_id = 'experiment_1'
         data_path = '/datasets/neural_data/tfrecords_with_meta'
         noise_estimates_path = '/datasets/neural_data/noise_estimates.npy'
         batch_size = 128
-        seed = 0
+        seed = 6
         crop_size = 227
         gfs_targets = [] 
         extraction_targets = [attr[0] for attr in NeuralDataProvider.ATTRIBUTES] \
