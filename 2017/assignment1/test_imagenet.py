@@ -59,6 +59,8 @@ class NeuralDataExperiment():
         """
         target_layers = ['pool1', 
                          'pool2', 
+                         'conv1',
+                         'conv2',
                          'conv3', 
                          'conv4', 
                          'conv5', 
