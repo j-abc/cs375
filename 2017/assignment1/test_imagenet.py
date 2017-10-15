@@ -224,7 +224,7 @@ class NeuralDataExperiment():
         return tb.tabarray(columns=[list(meta[k]) for k in meta_keys], names = meta_keys)
 
 
-    def categorization_test(self, features, meta):
+    def categorization_test(self, features, meta, variations = None, category = None):
         """
         Performs a categorization test using dldata
 
@@ -233,6 +233,13 @@ class NeuralDataExperiment():
         compute_metric_base from dldata.
         """
         print('Categorization test...')
+        subset = {}
+        if variations:
+            subset['var'] = variations
+        else:
+            subset['var'] = ['V0', 'V3', 'V6']
+        if category:
+            subset['category'] = category
         category_eval_spec = {
             'npc_train': None,
             'npc_test': 2,
@@ -244,8 +251,8 @@ class NeuralDataExperiment():
                               'model_kwargs': {'C':5e-3}
                              },
             'labelfunc': 'category',
-            'train_q': {'var': ['V0', 'V3', 'V6']},
-            'test_q': {'var': ['V0', 'V3', 'V6']},
+            'train_q': subset,
+            'test_q': subset,
             'split_by': 'obj'
         }
         res = compute_metric_base(features, meta, category_eval_spec)
@@ -253,7 +260,7 @@ class NeuralDataExperiment():
         return res
 
 
-    def regression_test(self, features, IT_features, meta):
+    def regression_test(self, features, IT_features, meta, variations = None, category = None):
         """
         Illustrates how to perform a regression test using dldata
 
@@ -261,6 +268,13 @@ class NeuralDataExperiment():
         do a regression on the IT neurons using compute_metric_base from dldata.
         """
         print('Regression test...')
+        subset = {}
+        if variations:
+            subset['var'] = variations
+        else:
+            subset['var'] = ['V0', 'V3', 'V6']
+        if category:
+            subset['category'] = category
         it_reg_eval_spec = {
             'npc_train': 70,
             'npc_test': 10,
@@ -272,8 +286,8 @@ class NeuralDataExperiment():
                 'model_type': 'linear_model.RidgeCV',
                              },
             'labelfunc': lambda x: (IT_features, None),
-            'train_q': {'var': ['V0', 'V3', 'V6']},
-            'test_q': {'var': ['V0', 'V3', 'V6']},
+            'train_q': subset,
+            'test_q': subset,
             'split_by': 'obj'
         }
         res = compute_metric_base(features, meta, it_reg_eval_spec)
@@ -357,7 +371,7 @@ class NeuralDataExperiment():
                             np.reshape(retval['rdm_%s' % layer], [-1]),
                             np.reshape(retval['rdm_it'], [-1])
                             )[0]
-           # categorization test
+            # categorization test
             retval['categorization_%s' % layer] = \
                     self.categorization_test(features[layer], meta)
             # IT regression test
