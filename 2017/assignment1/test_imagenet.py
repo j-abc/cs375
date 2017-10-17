@@ -54,20 +54,21 @@ class NeuralDataExperiment():
         exp_id, and might have to modify 'conv1_kernel' to the name of your
         first layer, once you start working with different models. Set the seed 
         number to your group number. But please do not change the rest. 
-
-        You will have to EDIT this part. Please set your exp_id here.
-        """
-        target_layers = ['pool1', 
                          'pool2', 
-                         'conv1',
-                         'conv2',
                          'conv3', 
                          'conv4', 
                          'conv5', 
                          'pool5', 
                          'fc6', 
                          'fc7',
-                         'fc8']
+                         'fc8',
+                         'conv1',
+                         'conv2']
+        You will have to EDIT this part. Please set your exp_id here.
+        """
+        
+        target_layers = ['pool1'
+                         ]
         extraction_step = None
         exp_id = 'experiment_1'
         data_path = '/datasets/neural_data/tfrecords_with_meta'
@@ -126,7 +127,8 @@ class NeuralDataExperiment():
                     'func': self.return_outputs,
                     'targets': self.Config.extraction_targets,
                 },
-                'num_steps': self.Config.val_steps,
+                'num_steps': self.Config.val_steps, #CHANGED HERE
+                #'num_steps': 1,
                 'agg_func': self.neural_analysis,
                 'online_agg_func': self.online_agg,
             }
@@ -253,8 +255,76 @@ class NeuralDataExperiment():
         res = compute_metric_base(features, meta, category_eval_spec)
         res.pop('split_results')
         return res
+    
+    def within_categorization_test(self, features, meta):
+        """
+        Performs a categorization test using dldata
 
+        You will need to EDIT this part. Define the specification to
+        do a categorization on the neural stimuli using 
+        compute_metric_base from dldata.
+        """
+        # convert res to a dictionary for each category
+        res = {}
+        category_set = np.unique(meta['category'])
+        print(category_set)
+        for ic in category_set:
+            print('Within categorization test for %s...'%ic)
+            
+            category_eval_spec = {
+                'npc_train': None,
+                'npc_test': 2,
+                'num_splits': 20,
+                'npc_validate': 0,
+                'metric_screen': 'classifier',
+                'metric_labels': None,
+                'metric_kwargs': {'model_type': 'svm.LinearSVC',
+                                  'model_kwargs': {'C':5e-3}
+                                 },
+                'labelfunc': 'obj',
+                'train_q': {'var': ['V0', 'V3', 'V6'], 'category': [ic]},
+                'test_q': {'var': ['V0', 'V3', 'V6'], 'category': [ic]},
+                'split_by': 'obj'
+            }
+            res[ic] = compute_metric_base(features, meta, category_eval_spec)
+            res[ic].pop('split_results')   
+        return res
 
+    def within_categorization_test(self, features, meta):
+        """
+        Performs a categorization test using dldata
+
+        You will need to EDIT this part. Define the specification to
+        do a categorization on the neural stimuli using 
+        compute_metric_base from dldata.
+        """
+        # convert res to a dictionary for each category
+        res = {}
+        category_set = np.unique(meta['category'])
+        print(category_set)
+        for ic in category_set:
+            print('Within categorization test for %s...'%ic)
+            
+            category_eval_spec = {
+                'npc_train': None,
+                'npc_test': 2,
+                'num_splits': 20,
+                'npc_validate': 0,
+                'metric_screen': 'classifier',
+                'metric_labels': None,
+                'metric_kwargs': {'model_type': 'svm.LinearSVC',
+                                  'model_kwargs': {'C':5e-3}
+                                 },
+                'labelfunc': 'obj',
+                'train_q': {'var': ['V0', 'V3', 'V6'], 'category': [ic]},
+                'test_q': {'var': ['V0', 'V3', 'V6'], 'category': [ic]},
+                'split_by': 'obj'
+            }
+            res[ic] = compute_metric_base(features, meta, category_eval_spec)
+            res[ic].pop('split_results')   
+        return res
+
+    
     def regression_test(self, features, IT_features, meta):
         """
         Illustrates how to perform a regression test using dldata
@@ -345,11 +415,14 @@ class NeuralDataExperiment():
         features, IT_feats = self.get_features(results, num_subsampled_features=1024)
 
         print('IT:')
+        """
         retval['rdm_it'] = \
                 self.compute_rdm(IT_feats, meta, mean_objects=True)
-
+        """
         for layer in features:
+            
             print('Layer: %s' % layer)
+            """
             # RDM
             retval['rdm_%s' % layer] = \
                     self.compute_rdm(features[layer], meta, mean_objects=True)
@@ -359,13 +432,18 @@ class NeuralDataExperiment():
                             np.reshape(retval['rdm_%s' % layer], [-1]),
                             np.reshape(retval['rdm_it'], [-1])
                             )[0]
-           # categorization test
+            # categorization test
             retval['categorization_%s' % layer] = \
                     self.categorization_test(features[layer], meta)
+            
             # IT regression test
             retval['it_regression_%s' % layer] = \
                     self.regression_test(features[layer], IT_feats, meta)
-
+            retval['within_categorization_%s' % layer] = \
+                    self.within_categorization_test(features[layer], meta)
+            """
+            retval['continuous_%s' % layer] = \
+                    self.continuous(features[layer], IT_feats, meta)
         return retval
 
 if __name__ == '__main__':
