@@ -296,7 +296,7 @@ class ImageNetExperiment():
             'dbname': 'imagenet',
             'collname': 'alexnet',
             'exp_id': 'experiment_1',
-            'do_restore': False,
+            'do_restore': True,
             'load_query': None,
         }
 
