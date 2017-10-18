@@ -167,7 +167,7 @@ class NeuralDataExperiment():
             'port': 24444,
             'dbname': 'imagenet',
             'collname': self.Config.model_name,
-            'exp_id': self.Config.exp_id,
+            'exp_id': self.Config.exp_id + '_' + str(self.Config.extraction_step),
             'save_to_gfs': self.Config.gfs_targets,
         }
 
