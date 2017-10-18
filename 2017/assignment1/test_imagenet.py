@@ -174,6 +174,7 @@ class NeuralDataExperiment():
             'exp_id': self.Config.exp_id + '_' + str(self.Config.extraction_step),
             'save_to_gfs': self.Config.gfs_targets,
         }
+        print params['save_params']
 
         """
         load_params defines how and if a model should be restored from the database.
