@@ -22,6 +22,7 @@ are marked with EDIT!
 import os
 import numpy as np
 import tensorflow as tf
+import cv2
 from skimage.filters import gabor_kernel
 
 def v1_model(inputs, train = True, norm = True, **kwargs):
@@ -269,7 +270,7 @@ def conv(inp,
         in_depth = inp.get_shape().as_list()[-1]
 
         # has the option of using a fixed set of kernels
-        if fixed_kernels:
+        if fixed_kernels.any():
             ksize = fixed_kernels.shape[:-1]
             out_depth = fixed_kernels.shape[0]
             kernel = tf.reshape(
