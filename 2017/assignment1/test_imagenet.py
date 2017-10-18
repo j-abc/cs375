@@ -470,7 +470,7 @@ def get_relevant_steps(modelname, quantiles):
     return steps
 
 def roundup(x, nearest=10000.):
-    return int(math.ceil(x / nearest)) * nearest
+    return int(math.ceil(x / nearest)) * int(nearest)
 
 if __name__ == '__main__':
     image_sets = [
