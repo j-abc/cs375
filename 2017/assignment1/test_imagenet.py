@@ -470,7 +470,7 @@ if __name__ == '__main__':
         ['V6'],
     ]
     models = [
-        (alexnet_model, 'alexnet'),
+        (alexnet_model, 'alexnet.files'),
         #(small_model, 'small_model'), #uncomment when ready
         #(v1_model, 'v1_model'),
     ]
