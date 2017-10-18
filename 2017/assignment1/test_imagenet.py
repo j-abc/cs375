@@ -470,8 +470,8 @@ if __name__ == '__main__':
     ]
     models = [
         (alexnet_model, 'alexnet'),
-        (small_model, 'small_model'),
-        (v1_model, 'v1_model'),
+        #(small_model, 'small_model'), #uncomment when ready
+        #(v1_model, 'v1_model'),
     ]
     quantiles = [0.25, 0.5, 0.75, 1]
     training_points = {
@@ -481,6 +481,7 @@ if __name__ == '__main__':
     
     for model in models:
         for image_set in image_sets:
+            print 'Running ', model[1], 'on these image sets: ', image_set
             for training_point in  training_points[model[1]]: 
                 m = NeuralDataExperiment()
                 params = m.setup_params(
