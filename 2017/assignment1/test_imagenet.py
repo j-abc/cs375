@@ -484,7 +484,7 @@ def get_relevant_steps(modelname, quantiles):
     steps = [step_query[i]['step'] for i in range(step_query.count())]
     indices = [int(round(q*len(steps) -1)) for q in quantiles]
     step_qs = [steps[i] for i in indices]
-    return steps_qs
+    return step_qs
 
 def roundup(x, nearest=10000.):
     return int(math.ceil(x / nearest)) * int(nearest)
