@@ -39,7 +39,7 @@ from tfutils import base, data, model, optimizer, utils
 
 from utils import post_process_neural_regression_msplit_preprocessed
 from dataprovider import NeuralDataProvider
-from models import alexnet_model
+from models import alexnet_model, small_model, v1_model
 
 
 class NeuralDataExperiment():
@@ -84,11 +84,15 @@ class NeuralDataExperiment():
         val_steps = int(NeuralDataProvider.N_VAL / batch_size)
 
 
-    def setup_params(self):
+    def setup_params(self, model = alexnet_model, image_set = ['V0','V3','V6'], extraction_step = None):
         """
         This function illustrates how to setup up the parameters for train_from_params
         """
         params = {}
+        self.Config.extraction_step = extraction_step
+        self.Config.model = model[0]
+        self.Config.model_name  = model[1]
+        self.Config.image_set = image_set
 
         """
         validation_params similar to train_params defines the validation parameters.
@@ -145,7 +149,7 @@ class NeuralDataExperiment():
         assignment.
         """
         params['model_params'] = {
-            'func': alexnet_model,
+            'func': self.Config.model,
         }
 
         """
@@ -161,7 +165,7 @@ class NeuralDataExperiment():
             'host': 'localhost',
             'port': 24444,
             'dbname': 'imagenet',
-            'collname': 'alexnet',
+            'collname': self.Config.model_name,
             'exp_id': self.Config.exp_id,
             'save_to_gfs': self.Config.gfs_targets,
         }
@@ -178,7 +182,7 @@ class NeuralDataExperiment():
             'host': 'localhost',
             'port': 24444,
             'dbname': 'imagenet',
-            'collname': 'alexnet',
+            'collname': self.Config.model_name,
             'exp_id': self.Config.exp_id,
             'do_restore': True,
             'query': {'step': self.Config.extraction_step} \
@@ -248,8 +252,8 @@ class NeuralDataExperiment():
                               'model_kwargs': {'C':5e-3}
                              },
             'labelfunc': 'category',
-            'train_q': {'var': ['V0', 'V3', 'V6']},
-            'test_q': {'var': ['V0', 'V3', 'V6']},
+            'train_q': {'var': self.Config.image_set},
+            'test_q': {'var': self.Config.image_set},
             'split_by': 'obj'
         }
         res = compute_metric_base(features, meta, category_eval_spec)
@@ -282,48 +286,13 @@ class NeuralDataExperiment():
                                   'model_kwargs': {'C':5e-3}
                                  },
                 'labelfunc': 'obj',
-                'train_q': {'var': ['V0', 'V3', 'V6'], 'category': [ic]},
-                'test_q': {'var': ['V0', 'V3', 'V6'], 'category': [ic]},
+                'train_q': {'var': self.Config.image_set, 'category': [ic]},
+                'test_q': {'var': self.Config.image_set, 'category': [ic]},
                 'split_by': 'obj'
             }
             res[ic] = compute_metric_base(features, meta, category_eval_spec)
             res[ic].pop('split_results')   
         return res
-
-    def within_categorization_test(self, features, meta):
-        """
-        Performs a categorization test using dldata
-
-        You will need to EDIT this part. Define the specification to
-        do a categorization on the neural stimuli using 
-        compute_metric_base from dldata.
-        """
-        # convert res to a dictionary for each category
-        res = {}
-        category_set = np.unique(meta['category'])
-        print(category_set)
-        for ic in category_set:
-            print('Within categorization test for %s...'%ic)
-            
-            category_eval_spec = {
-                'npc_train': None,
-                'npc_test': 2,
-                'num_splits': 20,
-                'npc_validate': 0,
-                'metric_screen': 'classifier',
-                'metric_labels': None,
-                'metric_kwargs': {'model_type': 'svm.LinearSVC',
-                                  'model_kwargs': {'C':5e-3}
-                                 },
-                'labelfunc': 'obj',
-                'train_q': {'var': ['V0', 'V3', 'V6'], 'category': [ic]},
-                'test_q': {'var': ['V0', 'V3', 'V6'], 'category': [ic]},
-                'split_by': 'obj'
-            }
-            res[ic] = compute_metric_base(features, meta, category_eval_spec)
-            res[ic].pop('split_results')   
-        return res
-
     
     def regression_test(self, features, IT_features, meta):
         """
@@ -344,8 +313,8 @@ class NeuralDataExperiment():
                 'model_type': 'linear_model.RidgeCV',
                              },
             'labelfunc': lambda x: (IT_features, None),
-            'train_q': {'var': ['V0', 'V3', 'V6']},
-            'test_q': {'var': ['V0', 'V3', 'V6']},
+            'train_q': {'var': self.Config.image_set},
+            'test_q': {'var': self.Config.image_set},
             'split_by': 'obj'
         }
         res = compute_metric_base(features, meta, it_reg_eval_spec)
@@ -446,11 +415,42 @@ class NeuralDataExperiment():
                     self.continuous(features[layer], IT_feats, meta)
         return retval
 
+def get_relevant_steps(modelname, quantiles):
+    # get connection
+    port = 24444
+    host = 'localhost'
+    connection = pm.MongoClient(port = port, host = host)
+    coll = connection['imagenet'][modelname]
+    # obtain max steps
+    query = {'step':{'$exists':True}, 'validates': {'$exists': False}}
+    max_step = coll.find_one(query, sort=[("step", pm.DESCENDING)])['step']
+    # get quantile steps
+    steps = [int(round(max_step * q)) for q in quantiles]
+    return steps
+
 if __name__ == '__main__':
-    """
-    Illustrates how to run the configured model using tfutils
-    """
-    base.get_params()
-    m = NeuralDataExperiment()
-    params = m.setup_params()
-    base.test_from_params(**params)
+    image_sets = [
+        ['V0', 'V3', 'V6'],
+        ['V6'],
+    ]
+    models = [
+        (alexnet_model, 'alexnet'),
+        (small_model, 'small_model'),
+        (v1_model, 'v1_model'),
+    ]
+    quantiles = [0.25, 0.5, 0.75, 1]
+    training_points = {
+        model[1]: get_relevant_steps(model[1], quantiles) for model in models
+    }
+    
+    
+    for model in models:
+        for image_set in image_sets:
+            for training_point in  training_points[model[1]]: 
+                m = NeuralDataExperiment()
+                params = m.setup_params(
+                    image_set = image_set, 
+                    model = model,
+                    training_point = training_point,
+                    )
+                base.test_from_params(**params)

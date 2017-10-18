@@ -1,0 +1,27 @@
+from tfutils import base
+from models import alexnet_model, small_model, v1_model
+from test_imagenet import NeuralDataExperiment
+
+
+
+image_sets = [
+	['V0', 'V3', 'V6'],
+	['V6'],
+]
+
+models = [
+	alexnet_model,
+	small_model,
+	v1_model,
+]
+
+training_points = [
+	
+]
+
+
+for model in models:
+	for image_set in image_sets:
+		m = NeuralDataExperiment()
+		params = m.setup_params(image_set = image_set, model = model)
+		base.test_from_params(**params)
