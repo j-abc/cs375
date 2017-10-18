@@ -41,14 +41,17 @@ def v1_model(inputs, train = True, norm = True, **kwargs):
     # only conv layer
     # convert to greyscale
     inputs_to_network = tf.image.rgb_to_grayscale(input_to_network)
+    
     # input local response normalization
     lrn_in = lrn(inputs_to_network, depth_radius=5, bias=1, alpha=.0001, beta=.75, layer='conv1')
+    
     # convolve with gabor filters
     ## get gabor kernels
     orientations = [(1. / 16 * 2.) * i for i in range(16)]
     frequencies = [2., 3., 4., 6., 11., 18.]
     ksize = 43
     fixed_kernels =  get_gabor_kernels(ksize, orientations, frequencies)
+    
     ## convolve
     outputs['conv1'],outputs['conv1_kernel']  = conv(lrn_in, 96, 11, 1, 
         padding='VALID', 
@@ -62,9 +65,9 @@ def v1_model(inputs, train = True, norm = True, **kwargs):
         lrn1 = lrn(outputs['conv1'], depth_radius=5, bias=1, alpha=.0001, beta=.75, layer='conv1')
     outputs['pool1'] = max_pool(lrn1, 3, 2, layer = 'pool1')
     
-    outputs['fc2'] = fc(outputs['pool1'], 4096, dropout=dropout, bias=.1, layer = 'fc6')
-    outputs['fc3'] = fc(outputs['fc2'], 4096, dropout=dropout, bias=.1, layer = 'fc7')
-    outputs['fc4'] = fc(outputs['fc3'],1000, activation=None, dropout=None, bias=0, layer = 'fc8')
+    outputs['fc2'] = fc(outputs['pool1'], 4096, dropout=dropout, bias=.1, layer = 'fc2')
+    outputs['fc3'] = fc(outputs['fc2'], 4096, dropout=dropout, bias=.1, layer = 'fc3')
+    outputs['fc4'] = fc(outputs['fc3'],1000, activation=None, dropout=None, bias=0, layer = 'fc4')
 
     outputs['pred'] = outputs['fc4']
     return outputs, {}  
