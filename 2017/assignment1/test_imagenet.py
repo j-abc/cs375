@@ -42,6 +42,10 @@ from utils import post_process_neural_regression_msplit_preprocessed
 from dataprovider import NeuralDataProvider
 from models import alexnet_model, smaller_model, v1_model 
 
+import math
+
+
+
 
 class NeuralDataExperiment():
     """
@@ -461,8 +465,11 @@ def get_relevant_steps(modelname, quantiles):
     query = {'step':{'$exists':True}, 'validates': {'$exists': False}}
     max_step = coll.find_one(query, sort=[("step", pm.DESCENDING)])['step']
     # get quantile steps
-    steps = [int(round(max_step * q)) for q in quantiles]
+    steps = [roundup(max_step * q) for q in quantiles]
     return steps
+
+def roundup(x, nearest=10000.):
+    return int(math.ceil(x / nearest)) * nearest
 
 if __name__ == '__main__':
     image_sets = [
