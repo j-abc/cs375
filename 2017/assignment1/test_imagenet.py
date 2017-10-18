@@ -72,8 +72,19 @@ class NeuralDataExperiment():
         You will have to EDIT this part. Please set your exp_id here.
         """
         
-        target_layers = ['pool1'
-                         ]
+        target_layers = [
+            'pool1',
+            'pool2', 
+            'conv3', 
+            'conv4', 
+            'conv5', 
+            'pool5', 
+            'fc6', 
+            'fc7',
+            'fc8',
+            'conv1',
+            'conv2',
+            ]
         extraction_step = None
         exp_id = 'experiment_1'
         data_path = '/datasets/neural_data/tfrecords_with_meta'
@@ -422,14 +433,11 @@ class NeuralDataExperiment():
         features, IT_feats = self.get_features(results, num_subsampled_features=1024)
 
         print('IT:')
-        """
         retval['rdm_it'] = \
                 self.compute_rdm(IT_feats, meta, mean_objects=True)
-        """
         for layer in features:
             
             print('Layer: %s' % layer)
-            """
             # RDM
             retval['rdm_%s' % layer] = \
                     self.compute_rdm(features[layer], meta, mean_objects=True)
@@ -451,7 +459,7 @@ class NeuralDataExperiment():
             retval['pleasework_%s' % layer] = \
                     self.continuous_test(features[layer], meta)
 
-            """
+
             retval['within_categorization_%s' % layer] = \
                     self.within_categorization_test(features[layer], meta)
         return retval
@@ -463,11 +471,20 @@ def get_relevant_steps(modelname, quantiles):
     connection = pm.MongoClient(port = port, host = host)
     coll = connection['imagenet'][modelname]
     # obtain max steps
-    query = {'step':{'$exists':True}, 'validates': {'$exists': False}}
-    max_step = coll.find_one(query, sort=[("step", pm.DESCENDING)])['step']
+    query = {
+        'step':{'$exists':True}, 
+        'validates': {'$exists': False},
+        'saved_filters': True,
+        }
+    step_query = coll.find(query,
+              sort=[("step", pm.ASCENDING)],
+              projection=['step'],
+             )
     # get quantile steps
-    steps = [roundup(max_step * q) for q in quantiles]
-    return steps
+    steps = [step_query[i]['step'] for i in range(step_query.count())]
+    indices = [int(round(q*len(steps) -1)) for q in quantiles]
+    step_qs = [steps[i] for i in indices]
+    return steps_qs
 
 def roundup(x, nearest=10000.):
     return int(math.ceil(x / nearest)) * int(nearest)
