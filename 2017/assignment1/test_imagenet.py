@@ -39,7 +39,7 @@ from tfutils import base, data, model, optimizer, utils
 
 from utils import post_process_neural_regression_msplit_preprocessed
 from dataprovider import NeuralDataProvider
-from models import alexnet_model, small_model, v1_model
+from models import alexnet_model, smaller_model, v1_model 
 
 
 class NeuralDataExperiment():
