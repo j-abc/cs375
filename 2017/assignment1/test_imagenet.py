@@ -456,7 +456,7 @@ class NeuralDataExperiment():
                     self.regression_test(features[layer], IT_feats, meta)
                 
             print 'pretty please'
-            retval['pleasework_%s' % layer] = \
+            retval['continuous_%s' % layer] = \
                     self.continuous_test(features[layer], meta)
 
 
