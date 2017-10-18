@@ -51,6 +51,12 @@ def v1_model(inputs, train = True, norm = True, **kwargs):
     frequencies = [2., 3., 4., 6., 11., 18.]
     ksize = 43
     fixed_kernels =  get_gabor_kernels(ksize, orientations, frequencies)
+    fixed_kernels = fixed_kernels[:,:,:43]
+    print(fixed_kernels.shape)
+    print(fixed_kernels.shape)
+    print(fixed_kernels.shape)
+    print(fixed_kernels.shape)
+    print(fixed_kernels.shape)
     
     ## convolve
     outputs['conv1'],outputs['conv1_kernel']  = conv(lrn_in, 96, 11, 1, 
@@ -389,7 +395,7 @@ def lrn(inp,
 def get_gabor_kernels(ksize, orientations, frequencies):
     # [filter_height, filter_width, in_channels, out_channels]
     out_depth = len(orientations) * len(frequencies)
-    kernels = np.zeros((ksize, ksize,out_depth), dtype=np.float64)
+    kernels = np.zeros((ksize, ksize,out_depth), dtype=np.float32)
     ix = 0
     for i,orient in enumerate(orientations):
         for j,freq in enumerate(frequencies):
