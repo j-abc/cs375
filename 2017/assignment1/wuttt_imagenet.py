@@ -54,21 +54,20 @@ class NeuralDataExperiment():
         exp_id, and might have to modify 'conv1_kernel' to the name of your
         first layer, once you start working with different models. Set the seed 
         number to your group number. But please do not change the rest. 
-                         'pool2', 
+
+        You will have to EDIT this part. Please set your exp_id here.
+        """
+        """
+        target_layers = ['pool1', 
+                         'conv2', 
                          'conv3', 
                          'conv4', 
                          'conv5', 
                          'pool5', 
                          'fc6', 
-                         'fc7',
-                         'fc8',
-                         'conv1',
-                         'conv2']
-        You will have to EDIT this part. Please set your exp_id here.
+                         'fc7']
         """
-        
-        target_layers = ['pool1'
-                         ]
+        target_layers = ['pool1']
         extraction_step = None
         exp_id = 'experiment_1'
         data_path = '/datasets/neural_data/tfrecords_with_meta'
@@ -127,8 +126,7 @@ class NeuralDataExperiment():
                     'func': self.return_outputs,
                     'targets': self.Config.extraction_targets,
                 },
-                'num_steps': self.Config.val_steps, #CHANGED HERE
-                #'num_steps': 1,
+                'num_steps': self.Config.val_steps, # : 1, CHANGED HERE
                 'agg_func': self.neural_analysis,
                 'online_agg_func': self.online_agg,
             }
@@ -255,7 +253,7 @@ class NeuralDataExperiment():
         res = compute_metric_base(features, meta, category_eval_spec)
         res.pop('split_results')
         return res
-    
+
     def within_categorization_test(self, features, meta):
         """
         Performs a categorization test using dldata
@@ -289,7 +287,7 @@ class NeuralDataExperiment():
             res[ic] = compute_metric_base(features, meta, category_eval_spec)
             res[ic].pop('split_results')   
         return res
-
+    
     def continuous_test(self, features, meta):
         """
         Performs a continuous test using dldata
@@ -321,7 +319,7 @@ class NeuralDataExperiment():
         res = compute_metric_base(features, meta, continuous_eval_spec)
         res.pop('split_results')   
         return res
-    
+
     def regression_test(self, features, IT_features, meta):
         """
         Illustrates how to perform a regression test using dldata
@@ -417,7 +415,6 @@ class NeuralDataExperiment():
                 self.compute_rdm(IT_feats, meta, mean_objects=True)
         """
         for layer in features:
-            
             print('Layer: %s' % layer)
             """
             # RDM
@@ -429,21 +426,18 @@ class NeuralDataExperiment():
                             np.reshape(retval['rdm_%s' % layer], [-1]),
                             np.reshape(retval['rdm_it'], [-1])
                             )[0]
-            # categorization test
+           # categorization test
             retval['categorization_%s' % layer] = \
                     self.categorization_test(features[layer], meta)
-            
             # IT regression test
             retval['it_regression_%s' % layer] = \
                     self.regression_test(features[layer], IT_feats, meta)
-                
-            print 'pretty please'
-            retval['pleasework_%s' % layer] = \
-                    self.continuous_test(features[layer], meta)
-
             """
             retval['within_categorization_%s' % layer] = \
                     self.within_categorization_test(features[layer], meta)
+                
+            retval['continuous_%s' % layer] = \
+                    self.continuous_test(features[layer], meta)                
         return retval
 
 if __name__ == '__main__':
