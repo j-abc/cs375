@@ -150,7 +150,7 @@ class NeuralDataExperiment():
         assignment.
         """
         params['model_params'] = {
-            'func': self.Config.model,
+            'func': model[0],
         }
 
         """
