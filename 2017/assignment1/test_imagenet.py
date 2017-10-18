@@ -470,13 +470,13 @@ if __name__ == '__main__':
         ['V6'],
     ]
     models = [
-        (alexnet_model, 'alexnet.files'),
+        (alexnet_model, 'alexnet' ,'alexnet.files'),
         #(small_model, 'small_model'), #uncomment when ready
         #(v1_model, 'v1_model'),
     ]
     quantiles = [0.25, 0.5, 0.75, 1]
     training_points = {
-        model[1]: get_relevant_steps(model[1], quantiles) for model in models
+        model[1]: get_relevant_steps(model[2], quantiles) for model in models
     }
     
     
