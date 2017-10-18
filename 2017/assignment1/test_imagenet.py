@@ -488,6 +488,6 @@ if __name__ == '__main__':
                 params = m.setup_params(
                     image_set = image_set, 
                     model = model,
-                    training_point = training_point,
+                    extraction_step = training_point,
                     )
                 base.test_from_params(**params)
