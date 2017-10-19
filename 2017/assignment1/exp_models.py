@@ -22,6 +22,62 @@ are marked with EDIT!
 import os
 import numpy as np
 import tensorflow as tf
+import cv2
+from skimage.filters import gabor_kernel
+
+def v1_model(inputs, train = True, norm = True, **kwargs):
+    """
+    This model is loosely based on the one decribed in
+    Pinto, N., Cox, D. D. & DiCarlo, J. J.
+    Why is Real-World Visual Object Recognition Hard. PLoS Comput Biol (2008)
+    """
+
+    # propagate input targets
+    outputs = inputs
+    dropout = .5 if train else None
+    input_to_network = inputs['images']
+
+    # layers
+    # only conv layer
+    # convert to greyscale
+    inputs_to_network = tf.image.rgb_to_grayscale(input_to_network)
+    
+    # input local response normalization
+    lrn_in = lrn(inputs_to_network, depth_radius=5, bias=1, alpha=.0001, beta=.75, layer='conv1')
+    
+    # convolve with gabor filters
+    ## get gabor kernels
+    orientations = [(1. / 16 * 2.) * i for i in range(16)]
+    frequencies = [2., 3., 4., 6., 11., 18.]
+    ksize = 43
+    fixed_kernels =  get_gabor_kernels(ksize, orientations, frequencies)
+    fixed_kernels = fixed_kernels[:,:,:43]
+    print(fixed_kernels.shape)
+    print(fixed_kernels.shape)
+    print(fixed_kernels.shape)
+    print(fixed_kernels.shape)
+    print(fixed_kernels.shape)
+    
+    ## convolve
+    outputs['conv1'],outputs['conv1_kernel']  = conv(lrn_in, 96, 11, 1, 
+        padding='VALID', 
+        layer = 'conv1', 
+        fixed_kernels = fixed_kernels,
+        )
+    # threshold and response saturation (x > 0 := 0, 0 < x < 1:= x, x> 1:= 1)
+    # output local divisive normalization
+    lrn1 = outputs['conv1']
+    if norm:
+        lrn1 = lrn(outputs['conv1'], depth_radius=5, bias=1, alpha=.0001, beta=.75, layer='conv1')
+    outputs['pool1'] = max_pool(lrn1, 3, 2, layer = 'pool1')
+    
+    outputs['fc2'] = fc(outputs['pool1'], 4096, dropout=dropout, bias=.1, layer = 'fc2')
+    outputs['fc3'] = fc(outputs['fc2'], 4096, dropout=dropout, bias=.1, layer = 'fc3')
+    outputs['fc4'] = fc(outputs['fc3'],1000, activation=None, dropout=None, bias=0, layer = 'fc4')
+
+    outputs['pred'] = outputs['fc4']
+    return outputs, {}  
+
 
 def tiny_model(inputs, train = True, norm = True, **kwargs):
 
@@ -51,7 +107,6 @@ def tiny_model(inputs, train = True, norm = True, **kwargs):
 
     outputs['pred'] = outputs['fc8']
     return outputs, {}     
-
 
 def alexnet_model(inputs, train=True, norm=True, **kwargs):
     """
@@ -152,6 +207,7 @@ def conv(inp,
          batch_norm=False,
          name='conv',
          layer = None,
+         fixed_kernels = None,
          ):
     with tf.variable_scope(layer):
         # assert out_shape is not None
@@ -167,15 +223,23 @@ def conv(inp,
             kernel_init_kwargs = {}
         in_depth = inp.get_shape().as_list()[-1]
 
-        # weights
-        init = initializer(kernel_init, **kernel_init_kwargs)
-
-
-        kernel = tf.get_variable(initializer=init,
+        # has the option of using a fixed set of kernels
+        if fixed_kernels.any():
+            ksize = fixed_kernels.shape[:-1]
+            out_depth = fixed_kernels.shape[0]
+            kernel = tf.reshape(
+                fixed_kernels, 
+                (ksize[0], ksize[1], in_depth, out_depth)
+                )
+        else:
+            # weights
+            init = initializer(kernel_init, **kernel_init_kwargs)
+            kernel = tf.get_variable(initializer=init,
                                 shape=[ksize[0], ksize[1], in_depth, out_depth],
                                 dtype=tf.float32,
                                 regularizer=tf.contrib.layers.l2_regularizer(weight_decay),
                                 name='weights')
+
         init = initializer(kind='constant', value=bias)
         biases = tf.get_variable(initializer=init,
                                 shape=[out_depth],
@@ -272,3 +336,22 @@ def lrn(inp,
         lrn = tf.nn.local_response_normalization(inp, depth_radius = depth_radius, alpha = alpha,
                                             beta = beta, bias = bias, name = name)
     return lrn
+
+def get_gabor_kernels(ksize, orientations, frequencies):
+    # [filter_height, filter_width, in_channels, out_channels]
+    out_depth = len(orientations) * len(frequencies)
+    kernels = np.zeros((ksize, ksize,out_depth), dtype=np.float32)
+    ix = 0
+    for i,orient in enumerate(orientations):
+        for j,freq in enumerate(frequencies):
+            kernels[:,:,ix]= cv2.getGaborKernel(
+                (43, 43),
+                9.0, 
+                orient,
+                freq,
+                1,
+                0,
+                ktype=cv2.CV_32F
+            )
+            ix += 1
+    return kernels
