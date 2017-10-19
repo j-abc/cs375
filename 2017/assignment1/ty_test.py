@@ -40,9 +40,9 @@ from tfutils import base, data, model, optimizer, utils
 
 from utils import post_process_neural_regression_msplit_preprocessed
 from dataprovider import NeuralDataProvider
-from models import alexnet_model, smaller_model, v1_model 
+from ty_model import * #, smaller_model, v1_model 
 
-import matH
+import math
 
 
 class NeuralDataExperiment():
@@ -69,6 +69,7 @@ class NeuralDataExperiment():
                          'conv2']
         You will have to EDIT this part. Please set your exp_id here.
         """
+        """
         target_layers = [
             'pool1',
             'pool2', 
@@ -82,7 +83,8 @@ class NeuralDataExperiment():
             'conv1',
             'conv2',
             ]
-
+        """
+        target_layers = ['pool1']
         extraction_step = None
         exp_id = 'experiment_1'
         data_path = '/datasets/neural_data/tfrecords_with_meta'
@@ -98,7 +100,7 @@ class NeuralDataExperiment():
         val_steps = int(NeuralDataProvider.N_VAL / batch_size)
 
 
-    def setup_params(self, model = alexnet_model, image_set = ['V0','V3','V6'], extraction_step = None):
+    def setup_params(self, model = gabor_model, image_set = ['V0','V3','V6'], extraction_step = None):
         """
         This function illustrates how to setup up the parameters for train_from_params
         """
@@ -180,7 +182,7 @@ class NeuralDataExperiment():
             'port': 24444,
             'dbname': 'imagenet',
             'collname': self.Config.model_name,
-            'exp_id': self.Config.exp_id + '_' + str(self.Config.extraction_step) + '_' + self.Config.model_name + '_' +  ''.join(self.Config.image_set),
+            'exp_id': self.Config.exp_id + '_' + str(self.Config.extraction_step),
             'save_to_gfs': self.Config.gfs_targets,
         }
         print params['save_params']
@@ -508,24 +510,24 @@ if __name__ == '__main__':
         ['V6'],
     ]
     models = [
-        (alexnet_model, 'alexnet' ,'alexnet.files'),
+        (gabor_model, 'tynet' ,'tynet.files'),
         #(small_model, 'small_model'), #uncomment when ready
         #(v1_model, 'v1_model'),
     ]
     quantiles = [0.25, 0.5, 0.75, 1]
+    """
     training_points = {
-        model[1]: get_relevant_steps(model[2], quantiles) for model in models
+        model[1]: 0 #get_relevant_steps(model[2], quantiles) for model in models
     }
-    
+    """    
     
     for model in models:
         for image_set in image_sets:
             print 'Running ', model[1], 'on these image sets: ', image_set
-            for training_point in  training_points[model[1]]: 
-                m = NeuralDataExperiment()
-                params = m.setup_params(
-                    image_set = image_set, 
-                    model = model,
-                    extraction_step = training_point,
-                    )
-                base.test_from_params(**params)
+            m = NeuralDataExperiment()
+            params = m.setup_params(
+                image_set = image_set, 
+                model = model,
+                extraction_step = 0,
+                )
+            base.test_from_params(**params)

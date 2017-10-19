@@ -58,7 +58,7 @@ import numpy as np
 import tensorflow as tf
 from tfutils import base, data, model, optimizer, utils
 from dataprovider import ImageNetDataProvider
-from models import smaller_model
+from models import tiny_model
 
 
 class ImageNetExperiment():
@@ -191,7 +191,7 @@ class ImageNetExperiment():
         switch out alexnet_model with your model function.
         """
         params['model_params'] = {
-            'func': smaller_model,
+            'func': tiny_model,
         }
 
         """
@@ -270,7 +270,7 @@ class ImageNetExperiment():
             'host': 'localhost',
             'port': 24444,
             'dbname': 'imagenet',
-            'collname': 'alexnet',
+            'collname': 'tinynet',
             'exp_id': 'experiment_1',
             'save_valid_freq': 10000,
             'save_filters_freq': 30000,
@@ -294,9 +294,9 @@ class ImageNetExperiment():
             'host': 'localhost',
             'port': 24444,
             'dbname': 'imagenet',
-            'collname': 'alexnet',
+            'collname': 'tinynet',
             'exp_id': 'experiment_1',
-            'do_restore': False,
+            'do_restore': True,
             'load_query': None,
         }
 
