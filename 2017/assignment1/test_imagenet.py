@@ -40,9 +40,9 @@ from tfutils import base, data, model, optimizer, utils
 
 from utils import post_process_neural_regression_msplit_preprocessed
 from dataprovider import NeuralDataProvider
-from models import alexnet_model, smaller_model, v1_model 
+from models import alexnet_model, tiny_model 
 
-import matH
+import math
 
 
 class NeuralDataExperiment():
@@ -401,6 +401,7 @@ class NeuralDataExperiment():
         """
         features = {}
         for layer in self.Config.target_layers:
+            print layer
             feats = np.concatenate(results[layer], axis=0)
             feats = np.reshape(feats, [feats.shape[0], -1])
             if num_subsampled_features is not None:
