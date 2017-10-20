@@ -58,7 +58,7 @@ import numpy as np
 import tensorflow as tf
 from tfutils import base, data, model, optimizer, utils
 from dataprovider import ImageNetDataProvider,NeuralDataProvider
-from models import v1_model
+from exp_models import v1_model
 
 
 class ImageNetExperiment():
