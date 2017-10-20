@@ -73,6 +73,13 @@ class ImageNetExperiment():
         Please set the seed to your group number. You can also change the batch
         size and n_epochs if you want but please do not change the rest.
         """
+        target_layers = [
+            'pool1', 
+            'fc2', 
+            'fc3',
+            'fc4',
+            'conv1',
+            ]
         batch_size = 256
         data_path = '/datasets/neural_data/tfrecords_with_meta'
         noise_estimates_path = '/datasets/neural_data/noise_estimates.npy'
@@ -82,6 +89,8 @@ class ImageNetExperiment():
         n_epochs = 90
         train_steps = ImageNetDataProvider.N_TRAIN / batch_size * n_epochs
         val_steps = np.ceil(ImageNetDataProvider.N_VAL / batch_size).astype(int)
+        extraction_targets = [attr[0] for attr in NeuralDataProvider.ATTRIBUTES] \
+            + target_layers + ['conv1_kernel']
 
 
     def setup_params(self):
