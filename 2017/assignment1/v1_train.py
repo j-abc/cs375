@@ -81,8 +81,8 @@ class ImageNetExperiment():
             'conv1',
             ]
         batch_size = 256
-        data_path = '/datasets/neural_data/tfrecords_with_meta'
-        noise_estimates_path = '/datasets/neural_data/noise_estimates.npy'
+        data_path = '/datasets/TFRecord_Imagenet_standard'
+        data_path_val = '/datasets/neural_data/tfrecords_with_meta'
         seed = 6
         crop_size = 227
         thres_loss = 1000
@@ -161,7 +161,7 @@ class ImageNetExperiment():
                 'data_params': {
                     # ImageNet data provider arguments
                     'func': NeuralDataProvider,
-                    'data_path': self.Config.data_path,
+                    'data_path': self.Config.data_path_val,
                     'crop_size': self.Config.crop_size,
                     # TFRecords (super class) data provider arguments
                     'file_pattern': '*.tfrecords',
