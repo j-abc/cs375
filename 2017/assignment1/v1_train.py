@@ -75,9 +75,6 @@ class ImageNetExperiment():
         """
         target_layers = [
             'pool1', 
-            'fc2', 
-            'fc3',
-            'fc4',
             'conv1',
             ]
         batch_size = 256
@@ -282,9 +279,9 @@ class ImageNetExperiment():
             'collname': 'v1',
             'exp_id': 'experiment_1_v1',
             'save_valid_freq': 1,
-            'save_filters_freq': 30000,
-            'cache_filters_freq': 50000,
-            'save_metrics_freq': 200,
+            'save_filters_freq': 1,
+            'cache_filters_freq': 1,
+            'save_metrics_freq': 1,
             'save_initial_filters' : False,
             'save_to_gfs': [],
         }
