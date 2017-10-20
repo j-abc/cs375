@@ -43,7 +43,6 @@ def v1_model(inputs, train = True, norm = True, **kwargs):
     inputs_to_network = tf.image.rgb_to_grayscale(input_to_network)
     
     # input local response normalization
-    lrn_in = lrn(inputs_to_network, depth_radius=5, bias=1, alpha=.0001, beta=.75, layer='conv1')
     
     # convolve with gabor filters
     ## get gabor kernels
@@ -51,15 +50,8 @@ def v1_model(inputs, train = True, norm = True, **kwargs):
     frequencies = [2., 3., 4., 6., 11., 18.]
     ksize = 43
     fixed_kernels =  get_gabor_kernels(ksize, orientations, frequencies)
-    fixed_kernels = fixed_kernels[:,:,:43]
-    print(fixed_kernels.shape)
-    print(fixed_kernels.shape)
-    print(fixed_kernels.shape)
-    print(fixed_kernels.shape)
-    print(fixed_kernels.shape)
-    
-    ## convolve
-    outputs['conv1'],outputs['conv1_kernel']  = conv(lrn_in, 96, 11, 1, 
+    fixed_kernels = fixed_kernels[:,:,:43]   
+    outputs['conv1'],outputs['conv1_kernel']  = conv(inputs_to_network, 96, 11, 4, 
         padding='VALID', 
         layer = 'conv1', 
         fixed_kernels = fixed_kernels,
@@ -224,7 +216,7 @@ def conv(inp,
         in_depth = inp.get_shape().as_list()[-1]
 
         # has the option of using a fixed set of kernels
-        if fixed_kernels.any():
+        if fixed_kernels is not None:
             ksize = fixed_kernels.shape[:-1]
             out_depth = fixed_kernels.shape[0]
             kernel = tf.reshape(
