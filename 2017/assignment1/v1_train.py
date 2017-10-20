@@ -57,8 +57,8 @@ import os
 import numpy as np
 import tensorflow as tf
 from tfutils import base, data, model, optimizer, utils
-from dataprovider import ImageNetDataProvider
-from models import v1_model
+from dataprovider import ImageNetDataProvider,NeuralDataProvider
+from exp_models import v1_model
 
 
 class ImageNetExperiment():
@@ -73,14 +73,24 @@ class ImageNetExperiment():
         Please set the seed to your group number. You can also change the batch
         size and n_epochs if you want but please do not change the rest.
         """
+        target_layers = [
+            'pool1', 
+            'fc2', 
+            'fc3',
+            'fc4',
+            'conv1',
+            ]
         batch_size = 256
         data_path = '/datasets/TFRecord_Imagenet_standard'
+        data_path_val = '/datasets/neural_data/tfrecords_with_meta'
         seed = 6
         crop_size = 227
         thres_loss = 1000
         n_epochs = 90
         train_steps = ImageNetDataProvider.N_TRAIN / batch_size * n_epochs
         val_steps = np.ceil(ImageNetDataProvider.N_VAL / batch_size).astype(int)
+        extraction_targets = [attr[0] for attr in NeuralDataProvider.ATTRIBUTES] \
+            + target_layers + ['conv1_kernel']
 
 
     def setup_params(self):
@@ -132,9 +142,9 @@ class ImageNetExperiment():
                 'func': self.return_outputs,
                 'targets': [],
             },
-            'num_steps': self.Config.train_steps,
+            'num_steps': 1,
             'thres_loss': self.Config.thres_loss,
-            'validate_first': False,
+            'validate_first': True,
         }
 
         """
@@ -146,36 +156,35 @@ class ImageNetExperiment():
                 batches in an online manner, e.g. to calculate the RUNNING mean across
                 batch losses
         """
-
         params['validation_params'] = {
             'topn_val': {
                 'data_params': {
                     # ImageNet data provider arguments
-                    'func': ImageNetDataProvider,
-                    'data_path': self.Config.data_path,
-                    'group': 'val',
+                    'func': NeuralDataProvider,
+                    'data_path': self.Config.data_path_val,
                     'crop_size': self.Config.crop_size,
                     # TFRecords (super class) data provider arguments
-                    'file_pattern': 'validation*.tfrecords',
+                    'file_pattern': '*.tfrecords',
                     'batch_size': self.Config.batch_size,
                     'shuffle': False,
-                    'shuffle_seed': self.Config.seed,
-                    'file_grab_func': self.subselect_tfrecords,
-                    'n_threads': 4,
+                    'shuffle_seed': self.Config.seed, 
+                    'n_threads': 1,
                 },
                 'queue_params': {
                     'queue_type': 'fifo',
                     'batch_size': self.Config.batch_size,
                     'seed': self.Config.seed,
                     'capacity': self.Config.batch_size * 10,
-                    'min_after_dequeue': self.Config.batch_size * 5,
+                    'min_after_dequeue': self.Config.batch_size * 1,
                 },
                 'targets': {
-                    'func': self.in_top_k,
+                    'func': self.return_outputs,
+                    'targets': self.Config.extraction_targets,
                 },
-                'num_steps': self.Config.val_steps,
-                'agg_func': self.agg_mean, 
-                'online_agg_func': self.online_agg_mean,
+                'num_steps': self.Config.val_steps, #CHANGED HERE
+                #'num_steps': 1,
+                'agg_func': self.neural_analysis,
+                'online_agg_func': self.online_agg,
             }
         }
 
@@ -271,8 +280,8 @@ class ImageNetExperiment():
             'port': 24444,
             'dbname': 'imagenet',
             'collname': 'v1',
-            'exp_id': 'experiment_1',
-            'save_valid_freq': 10000,
+            'exp_id': 'experiment_1_v1',
+            'save_valid_freq': 1,
             'save_filters_freq': 30000,
             'cache_filters_freq': 50000,
             'save_metrics_freq': 200,
@@ -295,8 +304,8 @@ class ImageNetExperiment():
             'port': 24444,
             'dbname': 'imagenet',
             'collname': 'v1',
-            'exp_id': 'experiment_1',
-            'do_restore': True,
+            'exp_id': 'experiment_1_v1',
+            'do_restore': False,
             'load_query': None,
         }
 
@@ -347,6 +356,266 @@ class ImageNetExperiment():
             agg_res[k].append(np.mean(v))
         return agg_res
 
+    def online_agg(self, agg_res, res, step):
+        """
+        Appends the value for each key
+        """
+        if agg_res is None:
+            agg_res = {k: [] for k in res}
+        for k, v in res.items():
+            if 'kernel' in k:
+                agg_res[k] = v
+            else:
+                agg_res[k].append(v)
+        return agg_res
+
+    def parse_meta_data(self, results):
+        """
+        Parses the meta data from tfrecords into a tabarray
+        """
+        meta_keys = [attr[0] for attr in NeuralDataProvider.ATTRIBUTES \
+                if attr[0] not in ['images', 'it_feats']]
+        meta = {}
+        for k in meta_keys:
+            if k not in results:
+                raise KeyError('Attribute %s not loaded' % k)
+            meta[k] = np.concatenate(results[k], axis=0)
+        return tb.tabarray(columns=[list(meta[k]) for k in meta_keys], names = meta_keys)
+
+
+    def categorization_test(self, features, meta):
+        """
+        Performs a categorization test using dldata
+
+        You will need to EDIT this part. Define the specification to
+        do a categorization on the neural stimuli using 
+        compute_metric_base from dldata.
+        """
+        print('Categorization test...')
+        category_eval_spec = {
+            'npc_train': None,
+            'npc_test': 2,
+            'num_splits': 20,
+            'npc_validate': 0,
+            'metric_screen': 'classifier',
+            'metric_labels': None,
+            'metric_kwargs': {'model_type': 'svm.LinearSVC',
+                              'model_kwargs': {'C':5e-3}
+                             },
+            'labelfunc': 'category',
+            'train_q': {'var': self.Config.image_set},
+            'test_q': {'var': self.Config.image_set},
+            'split_by': 'obj'
+        }
+        res = compute_metric_base(features, meta, category_eval_spec)
+        res.pop('split_results')
+        return res
+    
+    def within_categorization_test(self, features, meta):
+        """
+        Performs a categorization test using dldata
+
+        You will need to EDIT this part. Define the specification to
+        do a categorization on the neural stimuli using 
+        compute_metric_base from dldata.
+        """
+        # convert res to a dictionary for each category
+        res = {}
+        category_set = np.unique(meta['category'])
+        print(category_set)
+        for ic in category_set:
+            print('Within categorization test for %s...'%ic)
+            
+            category_eval_spec = {
+                'npc_train': None,
+                'npc_test': 2,
+                'num_splits': 20,
+                'npc_validate': 0,
+                'metric_screen': 'classifier',
+                'metric_labels': None,
+                'metric_kwargs': {'model_type': 'svm.LinearSVC',
+                                  'model_kwargs': {'C':5e-3}
+                                 },
+                'labelfunc': 'obj',
+                'train_q': {'var': self.Config.image_set, 'category': [ic]},
+                'test_q': {'var': self.Config.image_set, 'category': [ic]},
+                'split_by': 'obj'
+            }
+            res[ic] = compute_metric_base(features, meta, category_eval_spec)
+            res[ic].pop('split_results')   
+        return res
+
+    def continuous_test(self, features, meta):
+        """
+        Performs a continuous test using dldata
+
+        You will need to EDIT this part. Define the specification to
+        do a categorization on the neural stimuli using 
+        compute_metric_base from dldata.
+        """
+        # convert res to a dictionary for each category
+        print('Continuous test ...')
+        #print features
+        #print meta.dtype.names
+        print features.shape
+        print meta['rxy_semantic'].shape
+        continuous_eval_spec = {
+            'npc_train': None,
+            'npc_test': 2,
+            'num_splits': 20,
+            'npc_validate': 0,
+            'metric_screen': 'regression',
+            'metric_labels': None,
+            'metric_kwargs': {'model_type': 'linear_model.RidgeCV'},
+            'labelfunc': 'ty',
+            'train_q': {'var': self.Config.image_set},
+            'test_q': {'var': self.Config.image_set},
+            'split_by': 'obj'
+        }
+
+        res = compute_metric_base(features, meta, continuous_eval_spec)
+        res.pop('split_results')   
+        return res
+    
+    def regression_test(self, features, IT_features, meta):
+        """
+        Illustrates how to perform a regression test using dldata
+
+        You will need to EDIT this part. Define the specification to
+        do a regression on the IT neurons using compute_metric_base from dldata.
+        """
+        print('Regression test...')
+        it_reg_eval_spec = {
+            'npc_train': 70,
+            'npc_test': 10,
+            'num_splits': 5,
+            'npc_validate': 0,
+            'metric_screen': 'regression',
+            'metric_labels': None,
+            'metric_kwargs': {
+                'model_type': 'linear_model.RidgeCV',
+                             },
+            'labelfunc': lambda x: (IT_features, None),
+            'train_q': {'var': self.Config.image_set},
+            'test_q': {'var': self.Config.image_set},
+            'split_by': 'obj'
+        }
+        res = compute_metric_base(features, meta, it_reg_eval_spec)
+        espec = (('all','','IT_regression'), it_reg_eval_spec)
+        post_process_neural_regression_msplit_preprocessed(
+                res, self.Config.noise_estimates_path)
+        res.pop('split_results')
+        return res
+
+
+    def compute_rdm(self, features, meta, mean_objects=False):
+        """
+        Computes the RDM of the input features
+
+        You will need to EDIT this part. Compute the RDM of features which is a
+        [N_IMAGES x N_FEATURES] matrix. The features are then averaged across
+        images of the same category which creates a [N_CATEGORIES x N_FEATURES]
+        matrix that you have to work with.
+        """
+        print('Computing RDM...')
+        if mean_objects:
+            object_list = list(itertools.chain(
+                *[np.unique(meta[meta['category'] == c]['obj']) \
+                        for c in np.unique(meta['category'])]))
+            features = np.array([features[(meta['obj'] == o.rstrip('_'))].mean(0) \
+                    for o in object_list])
+        ### YOUR CODE HERE
+        rdm = 1 - np.corrcoef(features)
+        ### END OF YOUR CODE
+        return rdm
+
+
+    def get_features(self, results, num_subsampled_features=None):
+        """
+        Extracts, preprocesses and subsamples the target features
+        and the IT features
+        """
+        features = {}
+        for layer in self.Config.target_layers:
+            print layer
+            feats = np.concatenate(results[layer], axis=0)
+            feats = np.reshape(feats, [feats.shape[0], -1])
+            if num_subsampled_features is not None:
+                features[layer] = \
+                        feats[:, np.random.RandomState(0).permutation(
+                            feats.shape[1])[:num_subsampled_features]]
+
+        IT_feats = np.concatenate(results['it_feats'], axis=0)
+
+        return features, IT_feats
+
+
+    def neural_analysis(self, results):
+        """
+        Performs an analysis of the results from the model on the neural data.
+        This analysis includes:
+            - saving the conv1 kernels
+            - computing a RDM
+            - a categorization test
+            - and an IT regression.
+
+        You will need to EDIT this function to fully complete the assignment.
+        Add the necessary analyses as specified in the assignment pdf.
+        """
+        retval = {'conv1_kernel': results['conv1_kernel']}
+        print('Performing neural analysis...')
+        meta = self.parse_meta_data(results)
+        features, IT_feats = self.get_features(results, num_subsampled_features=1024)
+            
+        print('IT:')
+        retval['rdm_it'] = \
+                self.compute_rdm(IT_feats, meta, mean_objects=True)
+        for layer in features:
+            
+            print('Layer: %s' % layer)
+            # RDM
+            retval['rdm_%s' % layer] = \
+                    self.compute_rdm(features[layer], meta, mean_objects=True)
+                
+            # RDM correlation
+            retval['spearman_corrcoef_%s' % layer] = \
+                    spearmanr(
+                            np.reshape(retval['rdm_%s' % layer], [-1]),
+                            np.reshape(retval['rdm_it'], [-1])
+                            )[0]
+                
+            # categorization test
+            retval['categorization_%s' % layer] = \
+                    self.categorization_test(features[layer], meta)
+       
+            # IT regression test
+            try:
+                retval['it_regression_%s' % layer] = \
+                    self.regression_test(features[layer], IT_feats, meta)
+            except:
+                retval['it_regression_%s' % layer] = np.nan
+                
+            # continuous test
+            retval['continuous_%s' % layer] = \
+                    self.continuous_test(features[layer], meta)
+                
+            # within categorization test
+            retval['within_categorization_%s' % layer] = \
+                    self.within_categorization_test(features[layer], meta)
+                
+            if self.Config.model_name == "alexnet":
+                print("Performing IT analysis since model is alexnet...")
+                # categorization test
+                retval['categorization_it_%s' % layer] = \
+                        self.categorization_test(IT_feats, meta)
+                # continuous test
+                retval['continuous_it_%s' % layer] = \
+                        self.continuous_test(IT_feats, meta)
+                # within categorization test
+                retval['within_categorization_it_%s' % layer] = \
+                        self.within_categorization_test(IT_feats, meta)
+
+        return retval
     
 def loss_per_case_func(inputs, outputs):
     labels = outputs['labels']
