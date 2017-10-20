@@ -72,8 +72,8 @@ def v1_model(inputs, train = True, norm = True, **kwargs):
     outputs['pool1'] = max_pool(lrn1, 3, 2, layer = 'pool1')
     
     outputs['fc2'] = fc(outputs['pool1'], 4096, dropout=dropout, bias=.1, layer = 'fc2')
-    outputs['fc3'] = fc(outputs['fc2'], 4096, dropout=dropout, bias=.1, layer = 'fc3')
-    outputs['fc4'] = fc(outputs['fc3'],1000, activation=None, dropout=None, bias=0, layer = 'fc4')
+    #outputs['fc3'] = fc(outputs['fc2'], 4096, dropout=dropout, bias=.1, layer = 'fc3')
+    outputs['fc4'] = fc(outputs['fc2'],1000, activation=None, dropout=None, bias=0, layer = 'fc4')
 
     outputs['pred'] = outputs['fc4']
     return outputs, {}  
