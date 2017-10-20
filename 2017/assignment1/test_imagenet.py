@@ -72,10 +72,6 @@ class NeuralDataExperiment():
         target_layers = [
             'pool1',
             'pool2', 
-            'conv3', 
-            'conv4', 
-            'conv5', 
-            'pool5', 
             'fc6', 
             'fc7',
             'fc8',
@@ -453,9 +449,11 @@ class NeuralDataExperiment():
                     self.categorization_test(features[layer], meta)
        
             # IT regression test
-            retval['it_regression_%s' % layer] = \
+            try:
+                retval['it_regression_%s' % layer] = \
                     self.regression_test(features[layer], IT_feats, meta)
-                
+            except:
+                retval['it_regression_%s' % layer] = np.nan    
             # continuous test
             retval['continuous_%s' % layer] = \
                     self.continuous_test(features[layer], meta)
@@ -509,11 +507,11 @@ if __name__ == '__main__':
         ['V6'],
     ]
     models = [
-        (alexnet_model, 'alexnet' ,'alexnet.files'),
-        #(small_model, 'small_model'), #uncomment when ready
+        #(alexnet_model, 'alexnet' ,'alexnet.files'),
+        (tiny_model, 'tinynet', 'tinynet.files'), #uncomment when ready
         #(v1_model, 'v1_model'),
     ]
-    quantiles = [0.25, 0.5, 0.75, 1]
+    quantiles = [1]
     training_points = {
         model[1]: get_relevant_steps(model[2], quantiles) for model in models
     }
