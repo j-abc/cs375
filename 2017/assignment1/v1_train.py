@@ -147,12 +147,6 @@ class ImageNetExperiment():
                 batches in an online manner, e.g. to calculate the RUNNING mean across
                 batch losses
         """
-        m = NeuralDataExperiment()
-        params = m.setup_params(
-                    image_set = ['V0,'], 
-                    model = model,
-                    extraction_step = training_point,
-                    )
         params['validation_params'] = {
             'topn_val': {
                 'data_params': {
