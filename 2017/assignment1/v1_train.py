@@ -356,6 +356,19 @@ class ImageNetExperiment():
             agg_res[k].append(np.mean(v))
         return agg_res
 
+    def online_agg(self, agg_res, res, step):
+        """
+        Appends the value for each key
+        """
+        if agg_res is None:
+            agg_res = {k: [] for k in res}
+        for k, v in res.items():
+            if 'kernel' in k:
+                agg_res[k] = v
+            else:
+                agg_res[k].append(v)
+        return agg_res
+
     def parse_meta_data(self, results):
         """
         Parses the meta data from tfrecords into a tabarray
