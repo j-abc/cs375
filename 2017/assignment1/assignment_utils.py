@@ -55,7 +55,7 @@ def p22_training(exp_id, coll):
     plt.show()
     
 
-def p22_topo(exp_id, coll)
+def p22_topo(exp_id, coll):
 
 # We have provided a function that pulls the necessary data from the database. Your task is to plot the validation curve of the top1 and top5 accuracy. Label the graphs respectively and describe what you see.    
     def get_validation_data(exp_id):
@@ -204,5 +204,21 @@ def plot_conv1_kernels(data, step):
     f.subplots_adjust(hspace=0)
     f.subplots_adjust(wspace=0)
     
-
+def plot_conv1_kernels2(data, step, x = 8, y = 5):
+    """
+    Plots the 96 conv1 kernels in a 12 x 8 subplot grid.
+    
+    You will need to EDIT this function.
+    """
+    print('Iteration step: %d' % step)
+    kernels = np.array(data['conv1_kernel'])
+    ### YOUR CODE HERE
+    f, axarr = plt.subplots(x, y, figsize=(4*x, 4*y))
+    for i in range(x):
+        for j in range(y):
+            m = axarr[i,j].imshow(kernels[:,:,0,i*y + j])
+            axarr[i,j].get_xaxis().set_visible(False)
+            axarr[i,j].get_yaxis().set_visible(False)
+    f.subplots_adjust(hspace=0)
+    f.subplots_adjust(wspace=0)
     ### END OF YOUR CODE
