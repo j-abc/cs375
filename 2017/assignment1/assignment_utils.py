@@ -55,7 +55,7 @@ def p22_training(exp_id, coll):
     plt.show()
     
 
-def p22_topo(exp_id, coll)
+def p22_topo(exp_id, coll):
 
 # We have provided a function that pulls the necessary data from the database. Your task is to plot the validation curve of the top1 and top5 accuracy. Label the graphs respectively and describe what you see.    
     def get_validation_data(exp_id):
