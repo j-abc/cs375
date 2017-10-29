@@ -14,7 +14,7 @@ class model_switcher:
         data_name:  name of data source
     Stores:
         dbname:   as data_name
-        collname: as model_name
+        collname: as model_name + loss_name
         layers:   as layer names associated with our model
                   for now this is hard coded
         model_fn: a reference to the model definition as imported from models.py
@@ -35,7 +35,7 @@ class model_switcher:
         
         # variables that we feed into train and test.py
         self.dbname     = data_name
-        self.collname   = model_name
+        self.collname   = model_name + '_' + loss_name
         self.layers     = self._list_model_layers(model_name)
         self.model_fn   = self._get_model_fn(model_name)
         self.loss_fn    = self._get_loss_fn(loss_name, model_name)
@@ -64,7 +64,6 @@ class model_switcher:
             return getattr(experiments, data_name)
         else:
             raise Exception('Data name not found in experiments.py')
-        
         
     def _get_model_fn(self, model_name):
         '''
