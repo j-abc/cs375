@@ -28,13 +28,12 @@ class CIFAR10Experiment():
         """
         batch_size = 256
         data_path = '/datasets/cifar10/tfrecords'
-        seed = 0
+        seed = 6
         crop_size = 24
         thres_loss = 1000000000000000
         n_epochs = 60
         train_steps = CIFAR10DataProvider.N_TRAIN / batch_size * n_epochs
         val_steps = np.ceil(CIFAR10DataProvider.N_VAL / batch_size).astype(int)
-
 
     def setup_params(self):
         """
@@ -108,6 +107,7 @@ class CIFAR10Experiment():
         the prediction of the model.
         """
         params['model_params'] = {
+            'func': MY_MODEL # SEE THIS
         }
 
         """
@@ -120,6 +120,7 @@ class CIFAR10Experiment():
         learning_rate_params defines the learning rate, decay and learning function.
         """
         params['learning_rate_params'] = {
+            
         }
 
         """
@@ -147,6 +148,41 @@ if __name__ == '__main__':
     """
     Illustrates how to run the configured model using tfutils
     """
+    
+    # use argin for handling which moel we're working with. it's a bit of a pain to do otherwise
+    '''
+    model_params:
+        switch our model programatically
+    load_params:
+        dbname:    our dataset
+        collname:  our model name
+        exp_id:    default to test. pass in your own exp id when you're ready for the real thing
+    save_params:
+        see load_params above, just copy the stuff
+    '''
+    
+    # take in our model
+    # each model will have its own parameters
+    
+    # all the models have a uniform interface
+    
+    # we want to make it easy for sophia to actually access each model's parameters...
+    
+    # so for each of the models...
+    # output associated parameters
+    
+    
+    
+    # question: 
+    # will the model change with the dataset too? 
+    # or not?
+    '''
+    # modificaitons to be had:
+    # 1] in model_params, switch our model
+    # 2] in load_params, set dbname to which dataset we're working with
+    
+    
+    
     base.get_params()
     m = CIFAR10Experiment()
     params = m.setup_params()
