@@ -48,7 +48,11 @@ class model_switcher:
         layer_dict = {
             'herpaderp':['test', 'test','test'],
             'tiny_model': ['blah'],
-            'colorful_model':['oh','hi'],
+            'colorful_model':['conv1_1','conv1_2','conv2_1',
+            'conv2_2','conv3_1','conv3_2','conv3_3','conv4_1',
+            'conv4_2','conv4_3','conv5_1','conv5_2','conv5_3',
+            'conv6_1','conv6_2','conv6_3','conv7_1','conv7_2',
+            'conv7_3','conv8_1','conv8_2','conv8_3','pred'],
             'VAE':['oh', 'geez', 'why']
         }
         if model_name not in layer_dict.keys():

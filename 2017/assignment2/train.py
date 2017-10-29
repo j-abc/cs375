@@ -9,11 +9,11 @@ if __name__ == '__main__':
     this thing gon run it all
     '''
     # extract inputs
-    model_name   = 'VAE'
-    data_name    = 'cifar10'
-    loss_name    = 'default'
-    exp_id       = 'testrun'
-    run_now      = 'True'
+    model_name   = 'colorful_model'
+    data_name    = 'imagenet'
+    loss_name    = 'colorful_loss'
+    exp_id       = 'experiment2'
+    run_now      = 'False'
     
     if run_now == 'True':
         run_now = True
