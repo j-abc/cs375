@@ -12,6 +12,10 @@ class model_switcher:
         layers:   as layer names associated with our model
                   for now this is hard coded
         model_fn: a reference to the model definition as imported from models.py
+    Example:
+        from model_switcher import *
+        my_model = model_switcher(model_name = 'layers', data_name = 'cifar10')
+        # now we can access dbname, collname, and layers from my_model
     '''
     def __init__(self, model_name = 'herpaderp', data_name = 'cifar10'):
         '''
