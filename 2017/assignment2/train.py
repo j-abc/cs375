@@ -161,7 +161,7 @@ if __name__ == '__main__':
         see load_params above, just copy the stuff
     '''
     
-    # take in our model
+    # we
     # each model will have its own parameters
     
     # all the models have a uniform interface

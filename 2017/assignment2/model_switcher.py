@@ -1,4 +1,4 @@
-import models
+import test_models as models
 class model_switcher:
     '''
     Description:
