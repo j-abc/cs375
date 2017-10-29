@@ -13,7 +13,12 @@ if __name__ == '__main__':
     data_name    = 'cifar10'
     loss_name    = 'default'
     exp_id       = 'testrun'
-    run_now      = True
+    run_now      = 'True'
+    
+    if run_now == 'True':
+        run_now = True
+    else:
+        run_now = False
 
     # specify the model
     my_model   = model_switcher(model_name = model_name, 
