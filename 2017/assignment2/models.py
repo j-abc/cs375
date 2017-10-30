@@ -205,10 +205,15 @@ def colorful_model(inputs, train=True, norm=True, **kwargs):
     colorful model from Zhang et al. 2016
     """
     # preprocess images
-    data_l, gt_ab_313, prior_boost_nongray = preprocess(inputs['images'])
-
+    data_l, gt_ab_313, prior_boost_nongray = tf.py_func(preprocess, [inputs['images']], [tf.float32,tf.float32,tf.float32])
+    shp = inputs['images'].get_shape().as_list()
+    print shp
+    data_l.set_shape((shp[0],shp[1],shp[2],1))
+    gt_ab_313.set_shape((shp[0]/4,shp[1]/4,shp[2]/4,313))
     # propagate input targets
     outputs = inputs
+    outputs['data_l'] = data_l
+    outputs['gt_ab_313'] = gt_ab_313
     dropout = .5 if train else None
     input_to_network = data_l
     weight_decay = 1e-3
@@ -239,8 +244,9 @@ def colorful_model(inputs, train=True, norm=True, **kwargs):
             deconv = True
             ksize = 4
             strides[i] = int(round(1 / strides[i]))
+            print strides[i]
         else:
-            devonv = False
+            deconv = False
             ksize = 3
         outputs[layer_names[i]], outputs[layer_names[i] + '_kernel'] = conv(
             current_layer,
@@ -256,6 +262,7 @@ def colorful_model(inputs, train=True, norm=True, **kwargs):
             deconv = deconv,
             )
         current_layer = outputs[layer_names[i]]
+        print current_layer.get_shape().as_list(), strides
 
     outputs['pred'], outputs['pred' + '_kernel'] = conv(
             current_layer,
@@ -383,10 +390,16 @@ def conv(inp,
 
         # weights
         init = initializer(kernel_init, **kernel_init_kwargs)
+        print 'deconv:', deconv 
+        if deconv:
+            kshape = [ksize[0], ksize[1], out_depth, in_depth]
+            #kshape = [ksize[0], ksize[1], in_depth, out_depth]
+        else:
+            kshape = [ksize[0], ksize[1], in_depth, out_depth]
 
 
         kernel = tf.get_variable(initializer=init,
-                                shape=[ksize[0], ksize[1], in_depth, out_depth],
+                                shape=kshape,
                                 dtype=tf.float32,
                                 regularizer=tf.contrib.layers.l2_regularizer(weight_decay),
                                 name='weights')
@@ -397,17 +410,21 @@ def conv(inp,
                                 regularizer=tf.contrib.layers.l2_regularizer(weight_decay),
                                 name='bias')
         # ops
-        if dilation == 1:
+        if dilation == 1 and not deconv:
             conv = tf.nn.conv2d(inp, kernel,
                                 strides=strides,
                                 padding=padding)
         elif deconv:
-            conv = tf.nn.conv2d_transpose(inp, kernel,
+            print ' deconv'
+            shp = tf.shape(inp)
+            out_shape = [shp[0], shp[1] * strides[1], shp[2] * strides[1], out_depth]
+            conv = tf.nn.conv2d_transpose(inp, kernel, out_shape,
                                 strides=strides,
                                 padding=padding)
         else:
+            print 'regular'
             conv = tf.nn.atrous_conv2d(inp, kernel,
-                    dilation=dilation,
+                    dilation,
                     padding=padding)
         output = tf.nn.bias_add(conv, biases, name=name)
 

@@ -13,7 +13,7 @@ if __name__ == '__main__':
     data_name    = 'imagenet'
     loss_name    = 'colorful_loss'
     exp_id       = 'experiment2'
-    run_now      = 'False'
+    run_now      = 'True'
     
     if run_now == 'True':
         run_now = True

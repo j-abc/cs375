@@ -4,12 +4,9 @@ import tensorflow as tf
 from color_utils import preprocess
 
 def colorful_loss(inputs, outputs):
-    # preprocess images
-    data_l, gt_ab_313, prior_boost_nongray = preprocess(inputs)
-
     flat_pred = tf.reshape(outputs['pred'], [-1, 313])
-    flat_gt_ab_313 = tf.reshape(gt_ab_313, [-1,313])
-    return tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits(flat_conv8_313, flat_gt_ab_313))
+    flat_gt_ab_313 = tf.reshape(outputs['gt_ab_313'], [-1,313])
+    return tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits(logits=flat_pred, labels=flat_gt_ab_313))
 
 def vae_loss(inputs, outputs):
     # extract vars

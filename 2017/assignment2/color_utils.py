@@ -231,7 +231,6 @@ def preprocess(data):
   N = data.shape[0]
   H = data.shape[1]
   W = data.shape[2]
-
   #rgb2lab
   img_lab = color.rgb2lab(data)
 
@@ -254,7 +253,7 @@ def preprocess(data):
   #NNEncoder
   #gt_ab_313: [N, H/4, W/4, 313]
   gt_ab_313 = _nnencode(data_ab_ss)
-
+  print data_ab_ss.shape, gt_ab_313.shape
   #Prior_Boost 
   #prior_boost: [N, 1, H/4, W/4]
   prior_boost = _prior_boost(gt_ab_313)
