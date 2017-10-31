@@ -104,7 +104,7 @@ class Experiment():
         """
         params['model_params'] = {
             'func': self.model.model_fn,
-            'devices': ['/gpu:0', '/gpu:1'],
+            #'devices': ['/gpu:0', '/gpu:1'],
         }
 
         """
@@ -244,7 +244,7 @@ class imagenet(Experiment):
         """
         # provided [edit these]
         fnDataProvider = ImageNetDataProvider
-        batch_size = 256
+        batch_size = 128
         data_path = '/datasets/TFRecord_Imagenet_standard'
         seed = 6
         crop_size = 224
