@@ -207,9 +207,9 @@ def colorful_model(inputs, train=True, norm=True, **kwargs):
     # preprocess images
     data_l, gt_ab_313, prior_boost_nongray = tf.py_func(preprocess, [inputs['images']], [tf.float32,tf.float32,tf.float32])
     shp = inputs['images'].get_shape().as_list()
-    print shp,(shp[0]/4,shp[1]/4,shp[2]/4,313)
+    print shp,(shp[0],shp[1]/4,shp[2]/4,313)
     data_l.set_shape((shp[0],shp[1],shp[2],1))
-    gt_ab_313.set_shape((shp[0]/4,shp[1]/4,shp[2]/4,313))
+    gt_ab_313.set_shape((shp[0],shp[1]/4,shp[2]/4,313))
     # propagate input targets
     outputs = inputs
     outputs['data_l'] = data_l
