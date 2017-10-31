@@ -2,22 +2,27 @@ from model_switcher import *
 import os
 import numpy as np
 import tensorflow as tf
-from tfutils import base, data, model, optimizer, utils
-import dill
-import sys
+import json
+import argparse
+from tfutils import base
 
 if __name__ == '__main__':
     '''
     this thing gon run it all
     '''
-    print (sys.argv)
+    parser = argparse.ArgumentParser(prog='train net')
+    parser.add_argument('filename', help='JSON filename with the exp details')
+    args = parser.parse_args()
+    print args
+    with open(args.filename) as f:
+        print 'I got here'
+        setup = json.load(f)
     # extract inputs
-    model_name   = 'colorful_model'
-    data_name    = 'imagenet'
-    loss_name    = 'colorful_loss'
-    exp_id       = 'experiment2'
-    run_now      = 'False'
-    
+    model_name   = setup['model_name']
+    data_name    = setup['data_name']
+    loss_name    = setup['loss_name']
+    exp_id       = setup['exp_id']
+    run_now      = setup['run_now']
     if run_now == 'True':
         run_now = True
     else:
@@ -35,8 +40,6 @@ if __name__ == '__main__':
 
     # let's check our parameters for sanity
     if run_now:
-        base.get_params()
         base.train_from_params(**params)
     else:
         print(params)
-        print(dill.pickles(params))
