@@ -89,13 +89,6 @@ class Experiment():
                     'shuffle_seed': self.Config.seed,
                     'n_threads': 4,
                 },
-                'queue_params': {
-                    'queue_type': 'fifo',
-                    'batch_size': self.Config.batch_size,
-                    'seed': self.Config.seed,
-                    'capacity': self.Config.batch_size * 10,
-                    'min_after_dequeue': self.Config.batch_size * 5,
-                },
                 'targets': {
                     'func': self.custom_loss,
                     #'target': ['labels'],
