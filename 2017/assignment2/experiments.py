@@ -89,6 +89,9 @@ class Experiment():
                 'targets': {
                     'func': self.model.loss_fn,
                     'target': ['labels'],
+                    'loss_per_case_func_params' : {'_outputs': 'outputs', 
+                        '_targets_$all': 'inputs'
+                    },
                 },
             }
         }
