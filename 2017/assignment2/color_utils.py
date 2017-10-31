@@ -261,7 +261,7 @@ def preprocess(data):
   #prior_boost_nongray: [N, 1, H/4, W/4]
   prior_boost_nongray = prior_boost * nongray_mask
 
-  return data_l, gt_ab_313, prior_boost_nongray
+  return data_l.astype(np.float32), gt_ab_313.astype(np.float32), prior_boost_nongray.astype(np.float32)
 
 def softmax(x):
     """Compute softmax values for each sets of scores in x."""
