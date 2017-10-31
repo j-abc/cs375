@@ -23,7 +23,7 @@ if __name__ == '__main__':
     loss_name    = setup['loss_name']
     exp_id       = setup['exp_id']
     run_now      = setup['run_now']
-    
+
     if run_now == 'True':
         run_now = True
     else:
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     params = experiment.setup_params()
     # super hacky shit, sorry john
     if 'devices' in setup:
-        params['model_params']['devices'] = devices
+        params['model_params']['devices'] = setup['devices']
 
     # let's check our parameters for sanity
     if run_now:
