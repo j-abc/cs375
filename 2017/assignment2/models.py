@@ -421,6 +421,7 @@ def conv(inp,
             conv = tf.nn.conv2d_transpose(inp, kernel, out_shape,
                                 strides=strides,
                                 padding=padding)
+            conv.set_shape(out_shape)
         else:
             print 'regular'
             conv = tf.nn.atrous_conv2d(inp, kernel,
