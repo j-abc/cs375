@@ -1,6 +1,4 @@
 import matplotlib
-matplotlib.use('Agg') # dunno if this is necessary. it helped with a rand error message in jup though.
-
 import models
 import losses
 import experiments
@@ -51,7 +49,8 @@ class model_switcher:
             'tiny_model': ['blah'],
             'colorful_model':['oh','hi'],
             'VAE':['oh', 'geez', 'why'],
-            'shallow_bottle':['conv1','deconv1']
+            'shallow_bottle':['conv1','deconv1'],
+            'pooled_shallow':['conv1','pool1','deconv1']
         }
         if model_name not in layer_dict.keys():
             raise Exception('Model layer names not specified')
@@ -87,12 +86,12 @@ class model_switcher:
             'autoencoder':'autoencoder_loss',
             'VAE':'vae_loss',
             'colorful_model': 'colorful_loss',
-            'shallow_bottle':'autoencoder_loss'
+            'shallow_bottle':'autoencoder_loss',
+            'pooled_shallow':'autoencoder_loss'
         }
         if loss_name == 'default':
             loss_name = default_dict[model_name]
-        
-        # check if l
+
         if hasattr(losses, loss_name):
             return getattr(losses, loss_name)
         else:

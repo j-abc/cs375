@@ -37,11 +37,15 @@ def autoencoder_loss(inputs, outputs):
     #print(outputs['pred'])
     return     tf.nn.l2_loss(outputs['images'] - outputs['pred'])
 
-def vae_loss(inputs, outputs):
+def john_testing_stuff(inputs, outputs):
     print("INPUTS")
     print(inputs)
     print("OUTPUTS")
     #print(outputs['pred'])
-    return {'l2_loss':tf.nn.l2_loss(outputs['images'] - outputs['pred']),
-            'pred':outputs['pred'],
-            'gt':inputs['images']}
+    return 'no'     #tf.nn.l2_loss(outputs['images'] - outputs['pred']) tf.cast(tf.reduce_prod(tf.shape(outputs['images'])), tf.float32)
+
+
+def val_loss_wrapper(inputs, outputs, loss_fn):
+    return {'l2_loss':loss_fn(inputs,outputs),
+            'pred':outputs['pred'], # change names later...
+            'gt':inputs['images']}  # change names later...

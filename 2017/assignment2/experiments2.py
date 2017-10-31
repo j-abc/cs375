@@ -6,7 +6,7 @@ from dataprovider import CIFAR10DataProvider, ImageNetDataProvider
 from losses import *
 
 class Experiment():
-    def __init__(self, model, exp_id):
+    def __init__(self, model, exp_id, gpu = '0'):
         self.model = model
         self.exp_id = exp_id
         
@@ -39,24 +39,20 @@ class Experiment():
                 'func': self.Config.fnDataProvider,
                 'data_path': self.Config.data_path,
                 'group': 'train',
-                'crop_size': self.Config.crop_size,
+                'crop_size': self.Config.crop_size, # not in tut2
                 # TFRecords (super class) data provider arguments
-                'file_pattern': 'train*.tfrecords',
-                'batch_size': self.Config.batch_size,
-                'shuffle': False,
-                'shuffle_seed': self.Config.seed,
-                'n_threads': 4,
+                'file_pattern': 'train*.tfrecords', # not in tut2
+                'batch_size': self.Config.batch_size, # not in tut2
+                'shuffle': False, # not in tut2
+                'shuffle_seed': self.Config.seed, # not in tut2
+                'n_threads': 4, 
             },
             'queue_params': {
                 'queue_type': 'random',
                 'batch_size': self.Config.batch_size,
-                'seed': self.Config.seed,
-                'capacity': self.Config.batch_size * 10,
-                'min_after_dequeue': self.Config.batch_size * 5,
-            },
-            'targets': {
-                'func': self.return_outputs,
-                'targets': [],
+                'seed': self.Config.seed, # not in tut2
+                'capacity': self.Config.batch_size * 10, # not in tut2
+                'min_after_dequeue': self.Config.batch_size * 5, #not in tut2
             },
             'num_steps': self.Config.train_steps,
             'thres_loss': self.Config.thres_loss,
@@ -77,15 +73,18 @@ class Experiment():
                 'data_params': {
                     # Cifar 10 data provider arguments
                     'func': self.Config.fnDataProvider,
-                    'data_path': self.Config.data_path,
-                    'group': 'val',
-                    'crop_size': self.Config.crop_size,
+                    'data_path': self.Config.data_path, # not in tut2
+                    'group': 'val', #'val' is what's in as1
+                    'crop_size': self.Config.crop_size, # not in tut2
                     # TFRecords (super class) data provider arguments
-                    'file_pattern': 'test*.tfrecords',
-                    'batch_size': self.Config.batch_size,
-                    'shuffle': False,
-                    'shuffle_seed': self.Config.seed,
-                    'n_threads': 4,
+                    'file_pattern': 'test*.tfrecords', #not in tut2
+                    'batch_size': self.Config.batch_size, #not in tut2
+                    'shuffle': False, #not in tut2
+                    'shuffle_seed': self.Config.seed, #not in tut2
+                    'n_threads': 4, #not in tut2
+                },
+                'targets': {
+                    'func': lambda i, o : val_loss_wrapper(i, o, self.model.loss_fn), # using our loss function for validation
                 },
                 '''
                 'targets': {
@@ -97,12 +96,9 @@ class Experiment():
                     'agg_func': tf.reduce_mean,
                 },
                 '''
-                'targets': {
-                    'func': lambda i, o : val_loss_wrapper(i, o, self.model.loss_fn), # using our loss function for validation
-                },
                 'num_steps': self.Config.val_steps,                
                 'agg_func': self.agg_mean, 
-                'online_agg_func': self.online_agg_mean,
+                'online_agg_func': self.online_agg_mean,             
             }
         }
         """
@@ -111,20 +107,23 @@ class Experiment():
         the prediction of the model.
         """
         params['model_params'] = {
-            'func': self.model.model_fn,
-            #'devices': ['/gpu:0', '/gpu:1'],
+            'func': self.model.model_fn # ... if you wanna add model parameters in
+                                        # please do through model_switcher
+                                        # doing it here will muddy up file naming conventions for
+                                        # dbname or collname or w/e it's called. we want to be consistent
+            
         }
 
         """
         loss_params defines your training loss.
         """
         params['loss_params'] = {
-            'targets': ['labels'],
+            'targets': ['images'],
             'agg_func': tf.reduce_mean,
             'loss_per_case_func': self.model.loss_fn,
             'loss_per_case_func_params' : {'_outputs': 'outputs', 
                 '_targets_$all': 'inputs'},
-            'loss_func_kwargs' : {},            
+            'loss_func_kwargs' : {},
         }
 
         """
@@ -132,6 +131,16 @@ class Experiment():
         """
         def piecewise_constant_wrapper(global_step, boundaries, values):
             return tf.train.piecewise_constant(global_step, boundaries, values)  
+
+        params['skip_check'] = True
+        '''
+        # this params from as1
+        params['learning_rate_params'] = {
+            'func': piecewise_constant_wrapper,
+            'boundaries': list(np.array([150000, 300000, 450000]).astype(np.int64)),
+            'values': [0.01, 0.005, 0.001, 0.0005]            
+        }
+        '''
         
         # this params taken from the tutorial
         params['learning_rate_params'] = {
@@ -150,6 +159,7 @@ class Experiment():
             'optimizer_class': tf.train.AdamOptimizer,
             'clip': False,
         }
+
         """
         save_params defines how, where and when your training results are saved
         in the database.
@@ -160,12 +170,12 @@ class Experiment():
             'dbname': self.model.dbname,
             'collname': self.model.collname,
             'exp_id': self.exp_id,
-            'save_valid_freq': 10000,
-            'save_filters_freq': 30000,
-            'cache_filters_freq': 50000,
+            'save_valid_freq': 200, # 10000, in as1
+            'save_filters_freq': 1000, # 30000, in as1
+            'cache_filters_freq': 1000, # 50000, in as1
             'save_metrics_freq': 200,
-            'save_initial_filters' : False,
-            'save_to_gfs': [],            
+            'save_initial_filters' : False, # not in tutorial2, maybe take out
+            'save_to_gfs': [], # not in tutorial2, maybe take out
         }
 
         """
@@ -182,20 +192,33 @@ class Experiment():
         }
         return params
     
-    def agg_mean(self, x):
+    def online_agg_mean(self, agg_res, res, step):
+        """
+        Appends the mean value for each key
+        """
+        if agg_res is None:
+            agg_res = {k: [] for k in res}
+        for k, v in res.items():
+            if k in ['pred', 'gt']:
+                value = v
+            else:
+                value = np.mean(v)
+            agg_res[k].append(value)
+        return agg_res
+    
+    def agg_mean(self, results):
+        for k in results:
+            if k in ['pred', 'gt']:
+                results[k] = results[k][0]
+            elif k is 'l2_loss':
+                results[k] = np.mean(results[k])
+            else:
+                raise KeyError('Unknown target')
+        return results
+    '''
+    def agg_mean(self,x):
         return {k: np.mean(v) for k, v in x.items()}
-
-
-    def in_top_k(self, inputs, outputs):
-        """
-        Implements top_k loss for validation
-
-        You will need to EDIT this part. Implement the top1 and top5 functions
-        in the respective dictionary entry.
-        """
-        return {'top1': tf.nn.in_top_k(outputs['pred'], inputs['labels'], 1),
-                'top5': tf.nn.in_top_k(outputs['pred'], inputs['labels'], 5)}
-
+    '''
 
     def subselect_tfrecords(self, path):
         """
@@ -206,26 +229,6 @@ class Experiment():
         rng.shuffle(all_filenames)
         return [os.path.join(path, fn) for fn in all_filenames
                 if fn.endswith('.tfrecords')]
-
-
-    def return_outputs(self, inputs, outputs, targets, **kwargs):
-        """
-        Illustrates how to extract desired targets from the model
-        """
-        retval = {}
-        for target in targets:
-            retval[target] = outputs[target]
-        return retval
-
-    def online_agg_mean(self, agg_res, res, step):
-        """
-        Appends the mean value for each key
-        """
-        if agg_res is None:
-            agg_res = {k: [] for k in res}
-        for k, v in res.items():
-            agg_res[k].append(np.mean(v))
-        return agg_res    
 
 class cifar10(Experiment):
     class Config():
@@ -256,7 +259,7 @@ class imagenet(Experiment):
         batch_size = 128
         data_path = '/datasets/TFRecord_Imagenet_standard'
         seed = 6
-        crop_size = 224
+        crop_size = 224 # also wut this
         thres_loss = 1000000000000000 # dafuq does this mean?
         n_epochs = 90
         

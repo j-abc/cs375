@@ -197,19 +197,19 @@ def deconv(inp,
                                 regularizer=tf.contrib.layers.l2_regularizer(weight_decay),
                                 name='weights')
         init = initializer(kind='constant', value=bias)
-        '''
         biases = tf.get_variable(initializer=init,
                                 shape=[out_depth],
                                 dtype=tf.float32,
                                 regularizer=tf.contrib.layers.l2_regularizer(weight_decay),
                                 name='bias')
-        '''
+                                
+        
         # feed into our deconvolution
         deconv = tf.nn.conv2d_transpose(inp, kernel, out_shape,#deconv_out_shape, 
                                         strides = strides)
-        '''
-        output = tf.nn.bias_add(deconv, biases, name=name)
-        '''
+        
+        deconv = tf.nn.bias_add(deconv, biases, name=name)
+        
         output = deconv
         if batch_norm:
             output = tf.nn.batch_normalization(output, mean=0, variance=1, offset=None,
@@ -217,6 +217,40 @@ def deconv(inp,
     return output, kernel
 
 def shallow_bottle(inputs, train = True, norm = True, **kwargs):
+    # propagate input targets
+    outputs = inputs
+    
+    print inputs['images'].get_shape().as_list()
+    print outputs['images'].get_shape().as_list()
+    # https://stackoverflow.com/questions/39373230/what-does-tensorflows-conv2d-transpose-operation-do
+    
+    # create the encoder
+    outputs['conv1'], outputs['conv1_kernel'] = conv(outputs['images'], 
+                                                     64, 
+                                                     ksize=7, 
+                                                     strides=16, 
+                                                     padding = 'SAME', 
+                                                     layer = 'conv1',
+                                                     activation = 'relu')
+    
+    # create the decoder
+    my_shape =  outputs['images'].get_shape().as_list()
+    out_shape = [my_shape[0], my_shape[1], my_shape[2], my_shape[3]]
+    print("out shape")
+    print out_shape
+    print inputs['images'].get_shape().as_list()
+    outputs['deconv1'], outputs['deconv1_kernel'] = deconv(outputs['conv1'], 
+                                                           out_shape,
+                                                           ksize=7,
+                                                           strides=16,
+                                                           padding = 'SAME',
+                                                           layer = 'deconv1')
+    # outputs['out'] 
+    outputs['pred'] = outputs['deconv1']
+    return outputs, {}
+    
+    
+def stuff(inputs, train = True, norm = True, **kwargs):
     # propagate input targets
     outputs = inputs
     
@@ -232,7 +266,7 @@ def shallow_bottle(inputs, train = True, norm = True, **kwargs):
                                                      padding = 'VALID', 
                                                      layer = 'conv1',
                                                      activation = 'relu')
-        
+    
     # create the decoder
     my_shape =  outputs['images'].get_shape().as_list()
     out_shape = [my_shape[0], my_shape[1], my_shape[2], my_shape[3]]
@@ -243,6 +277,37 @@ def shallow_bottle(inputs, train = True, norm = True, **kwargs):
                                                            out_shape,
                                                            ksize=7,
                                                            strides=12,
+                                                           padding = 'VALID',
+                                                           layer = 'deconv1')
+    # outputs['out'] 
+    outputs['pred'] = outputs['deconv1']
+    return outputs, {}
+
+def pooled_shallow(inputs, train = True, norm = True, **kwargs):
+    # propagate input targets
+    outputs = inputs
+    
+    print inputs['images'].get_shape().as_list()
+    print outputs['images'].get_shape().as_list()
+
+    
+    # create the encoder
+    outputs['conv1'], outputs['conv1_kernel'] = conv(outputs['images'], 
+                                                     64, 
+                                                     ksize=7, 
+                                                     strides=4, 
+                                                     padding = 'VALID', 
+                                                     layer = 'conv1',
+                                                     activation = 'relu')
+    outputs['pool1'] = max_pool(outputs['conv1'], 3, 4, layer = 'pool1')    
+        
+    # create the decoder
+    my_shape =  outputs['images'].get_shape().as_list()
+    out_shape = [my_shape[0], my_shape[1], my_shape[2], my_shape[3]]
+    outputs['deconv1'], outputs['deconv1_kernel'] = deconv(outputs['pool1'], 
+                                                           out_shape,
+                                                           ksize=7,
+                                                           strides=3,
                                                            padding = 'VALID',
                                                            layer = 'deconv1')
     # outputs['out'] 
