@@ -86,6 +86,10 @@ class Experiment():
                     'shuffle_seed': self.Config.seed,
                     'n_threads': 4,
                 },
+                'targets': {
+                    'func': self.model.loss_fn,
+                    'target': ['labels'],
+                },
             }
         }
         """
