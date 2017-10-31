@@ -241,7 +241,7 @@ def shallow_bottle(inputs, train = True, norm = True, **kwargs):
     print inputs['images'].get_shape().as_list()
     outputs['deconv1'], outputs['deconv1_kernel'] = deconv(outputs['conv1'], 
                                                            out_shape,
-                                                           ksize=7,
+                                                           ksize=16,
                                                            strides=16,
                                                            padding = 'SAME',
                                                            layer = 'deconv1')

@@ -3,6 +3,7 @@ import numpy as np
 import tensorflow as tf
 from tfutils import base, data, model, optimizer, utils
 from dataprovider import CIFAR10DataProvider, ImageNetDataProvider
+from losses import *
 
 class Experiment():
     def __init__(self, model, exp_id):
@@ -94,7 +95,15 @@ class Experiment():
                     },
                     'agg_func': tf.reduce_mean,
                 },
-                'num_steps': self.Config.val_steps,
+                '''
+                'targets': {
+                    'func': lambda i, o : val_loss_wrapper(i, o, self.model.loss_fn), # using our loss function for validation
+                },
+                'num_steps': self.Config.val_steps,                
+                'agg_func': self.agg_mean, 
+                'online_agg_func': self.online_agg_mean,
+                '''
+                'num_steps': self.Config.val_steps,                
             }
         }
         """
@@ -111,7 +120,7 @@ class Experiment():
         loss_params defines your training loss.
         """
         params['loss_params'] = {
-            'targets': ['labels'],
+            'targets': ['images'],
             'agg_func': tf.reduce_mean,
             'loss_per_case_func': self.model.loss_fn,
             'loss_per_case_func_params' : {'_outputs': 'outputs', 
@@ -133,16 +142,15 @@ class Experiment():
             'staircase': True,
         }
 
-
         """
         optimizer_params defines the optimizer.
         """
+        # this params taken from the tutorial
         params['optimizer_params'] = {
             'func': optimizer.ClipOptimizer,
             'optimizer_class': tf.train.AdamOptimizer,
             'clip': False,
         }
-
         """
         save_params defines how, where and when your training results are saved
         in the database.
@@ -153,16 +161,10 @@ class Experiment():
             'dbname': self.model.dbname,
             'collname': self.model.collname,
             'exp_id': self.exp_id,
-            '''
             'save_valid_freq': 10000,
             'save_filters_freq': 30000,
             'cache_filters_freq': 50000,
             'save_metrics_freq': 200,
-            '''
-            'save_valid_freq': 200, # 10000, in as1
-            'save_filters_freq': 1000, # 30000, in as1
-            'cache_filters_freq': 1000, # 50000, in as1
-            'save_metrics_freq': 200,            
             'save_initial_filters' : False,
             'save_to_gfs': [],            
         }
@@ -181,19 +183,8 @@ class Experiment():
         }
         return params
     
-    def agg_mean(self, x):
-        return {k: np.mean(v) for k, v in x.items()}
-
-
-    def in_top_k(self, inputs, outputs):
-        """
-        Implements top_k loss for validation
-
-        You will need to EDIT this part. Implement the top1 and top5 functions
-        in the respective dictionary entry.
-        """
-        return {'top1': tf.nn.in_top_k(outputs['pred'], inputs['labels'], 1),
-                'top5': tf.nn.in_top_k(outputs['pred'], inputs['labels'], 5)}
+#    def agg_mean(self, x):
+#        return {k: np.mean(v) for k, v in x.items()}
 
 
     def subselect_tfrecords(self, path):
@@ -215,7 +206,7 @@ class Experiment():
         for target in targets:
             retval[target] = outputs[target]
         return retval
-
+    '''
     def online_agg_mean(self, agg_res, res, step):
         """
         Appends the mean value for each key
@@ -225,6 +216,30 @@ class Experiment():
         for k, v in res.items():
             agg_res[k].append(np.mean(v))
         return agg_res    
+    '''
+    def online_agg_mean(self, agg_res, res, step):
+        """
+        Appends the mean value for each key
+        """
+        if agg_res is None:
+            agg_res = {k: [] for k in res}
+        for k, v in res.items():
+            if k in ['pred', 'gt']:
+                value = v
+            else:
+                value = np.mean(v)
+            agg_res[k].append(value)
+        return agg_res
+    
+    def agg_mean(self, results):
+        for k in results:
+            if k in ['pred', 'gt']:
+                results[k] = results[k][0]
+            elif k is 'l2_loss':
+                results[k] = np.mean(results[k])
+            else:
+                raise KeyError('Unknown target')
+        return results    
 
 class cifar10(Experiment):
     class Config():
