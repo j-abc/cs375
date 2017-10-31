@@ -205,7 +205,7 @@ def colorful_model(inputs, train=True, norm=True, **kwargs):
     colorful model from Zhang et al. 2016
     """
     # preprocess images
-    data_l, gt_ab_313, prior_boost_nongray = tf.py_func(preprocess, [inputs['images']], [tf.float32,tf.float32,tf.float32])
+    data_l, gt_ab_313, prior_boost_nongray = tf.py_func(preprocess, [inputs['images']], [tf.float64,tf.float64,tf.float64])
     shp = inputs['images'].get_shape().as_list()
     print shp
     data_l.set_shape((shp[0],shp[1],shp[2],1))
