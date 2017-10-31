@@ -103,7 +103,8 @@ class Experiment():
         the prediction of the model.
         """
         params['model_params'] = {
-            'func': self.model.model_fn # SEE THIS
+            'func': self.model.model_fn,
+            'devices': ['/gpu:0', '/gpu:1'],
         }
 
         """
@@ -246,7 +247,7 @@ class imagenet(Experiment):
         batch_size = 128
         data_path = '/datasets/TFRecord_Imagenet_standard'
         seed = 6
-        crop_size = 227
+        crop_size = 224
         thres_loss = 1000 # dafuq does this mean?
         n_epochs = 90
         
