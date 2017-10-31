@@ -92,7 +92,9 @@ class Experiment():
                     'loss_per_case_func_params' : {'_outputs': 'outputs', 
                         '_targets_$all': 'inputs'
                     },
+                    'agg_func': tf.reduce_mean,
                 },
+                'num_steps': self.Config.val_steps,
             }
         }
         """
