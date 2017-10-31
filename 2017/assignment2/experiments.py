@@ -89,15 +89,23 @@ class Experiment():
                     'shuffle_seed': self.Config.seed,
                     'n_threads': 4,
                 },
+                'queue_params': {
+                    'queue_type': 'fifo',
+                    'batch_size': self.Config.batch_size,
+                    'seed': self.Config.seed,
+                    'capacity': self.Config.batch_size * 10,
+                    'min_after_dequeue': self.Config.batch_size * 5,
+                },
                 'targets': {
                     'func': self.model.loss_fn,
                     'target': ['labels'],
                     'loss_per_case_func_params' : {'_outputs': 'outputs', 
                         '_targets_$all': 'inputs'
                     },
-                    'agg_func': tf.reduce_mean,
                 },
+                'agg_func': tf.reduce_mean,
                 'num_steps': self.Config.val_steps,
+                'online_agg_func': self.online_agg_mean,
             }
         }
         """

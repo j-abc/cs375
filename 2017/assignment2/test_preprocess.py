@@ -10,4 +10,4 @@ D[1,:,:,:] = a
 
 data_l, gt_ab_313, prior_boost_nongray = preprocess(D)
 
-print np.nan_to_num(gt_ab_313)[0,:,:,:].sum(axis=-1).shape
+print np.nan_to_num(gt_ab_313)[0,:,:,:]
