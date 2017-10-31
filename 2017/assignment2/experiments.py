@@ -103,7 +103,7 @@ class Experiment():
                     #    '_targets_$all': 'inputs'
                     #},
                 },
-                'agg_func': tf.reduce_mean,
+                'agg_func': self.agg_mean,
                 'num_steps': self.Config.val_steps,
                 'online_agg_func': self.online_agg_mean,
             }
