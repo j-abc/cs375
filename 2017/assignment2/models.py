@@ -275,7 +275,7 @@ def stuff(inputs, train = True, norm = True, **kwargs):
     print inputs['images'].get_shape().as_list()
     outputs['deconv1'], outputs['deconv1_kernel'] = deconv(outputs['conv1'], 
                                                            out_shape,
-                                                           ksize=7,
+                                                           ksize=12,
                                                            strides=12,
                                                            padding = 'VALID',
                                                            layer = 'deconv1')

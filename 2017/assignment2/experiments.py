@@ -33,6 +33,7 @@ class Experiment():
             thres_loss: if the loss exceeds thres_loss the training will be stopped
             validate_first: run validation before starting the training
         """
+        params['skip_check'] = True
         params['train_params'] = {
             'data_params': {
                 # Cifar 10 data provider arguments
@@ -43,6 +44,8 @@ class Experiment():
                 # TFRecords (super class) data provider arguments
                 'file_pattern': 'train*.tfrecords',
                 'batch_size': self.Config.batch_size,
+                    'file_grab_func': self.subselect_tfrecords,
+                
                 'shuffle': False,
                 'shuffle_seed': self.Config.seed,
                 'n_threads': 4,
@@ -81,31 +84,35 @@ class Experiment():
                     'group': 'val',
                     'crop_size': self.Config.crop_size,
                     # TFRecords (super class) data provider arguments
-                    'file_pattern': 'test*.tfrecords',
+                    'file_pattern': 'validation*.tfrecords',
                     'batch_size': self.Config.batch_size,
                     'shuffle': False,
                     'shuffle_seed': self.Config.seed,
-                    'file_grab_func': self.subselect_tfrecords,
+                    'file_grab_func': self.subselect_tfrecords,                    
                     'n_threads': 4,
                 },
-                'targets': {
-                    'func': lambda i, o : val_loss_wrapper(i, o, self.model.loss_fn), # using our loss function for validation
-                },
-                '''
-                'targets': {
-                    'func': self.model.loss_fn,
-                    'target': ['labels'],
-                    'loss_per_case_func_params' : {'_outputs': 'outputs', 
-                        '_targets_$all': 'inputs'
-                    },
-                    'agg_func': tf.reduce_mean,
-                },
-                '''
-                'num_steps': self.Config.val_steps,                
+                'queue_params': {'queue_type': 'fifo',
+                                 'batch_size': self.Config.batch_size},                
+                'targets': {'func': lambda i, o : val_loss_wrapper(i, o, self.model.loss_fn)},
+                'num_steps': self.Config.val_steps,
                 'agg_func': self.agg_mean, 
                 'online_agg_func': self.online_agg_mean,    
             }
         }
+        '''
+                'targets': {
+                    'func': self.model.loss_fn,
+                    'target': ['labels'],
+                    'loss_per_case_func_params' : {'_outputs': 'outputs', 
+                        '_tarer gets_$all': 'inputs'
+                    },
+                    'agg_func': tf.reduce_mean,
+                },
+                'num_steps': self.Config.val_steps,
+            }
+        }
+        '''
+
         """
         model_params defines the model i.e. the architecture that 
         takes the output of the data provider as input and outputs 
@@ -115,26 +122,22 @@ class Experiment():
             'func': self.model.model_fn,
             #'devices': ['/gpu:0', '/gpu:1'],
         }
-
         """
         loss_params defines your training loss.
         """
         params['loss_params'] = {
-            'targets': ['images'],
+            'targets': ['labels'],
             'agg_func': tf.reduce_mean,
             'loss_per_case_func': self.model.loss_fn,
             'loss_per_case_func_params' : {'_outputs': 'outputs', 
                 '_targets_$all': 'inputs'},
             'loss_func_kwargs' : {},            
         }
-
         """
         learning_rate_params defines the learning rate, decay and learning function.
         """
         def piecewise_constant_wrapper(global_step, boundaries, values):
             return tf.train.piecewise_constant(global_step, boundaries, values)  
-
-        params['skip_check'] = True
         
         # this params taken from the tutorial
         params['learning_rate_params'] = {
@@ -143,8 +146,6 @@ class Experiment():
             'decay_rate': 0.95,
             'staircase': True,
         }
-
-
         """
         optimizer_params defines the optimizer.
         """
@@ -153,7 +154,6 @@ class Experiment():
             'optimizer_class': tf.train.AdamOptimizer,
             'clip': False,
         }
-
         """
         save_params defines how, where and when your training results are saved
         in the database.
@@ -186,29 +186,19 @@ class Experiment():
         }
         return params
     
-    def online_agg_mean(self, agg_res, res, step):
+    def agg_mean(self, x):
+        return {k: np.mean(v) for k, v in x.items()}
+
+
+    def in_top_k(self, inputs, outputs):
         """
-        Appends the mean value for each key
+        Implements top_k loss for validation
+
+        You will need to EDIT this part. Implement the top1 and top5 functions
+        in the respective dictionary entry.
         """
-        if agg_res is None:
-            agg_res = {k: [] for k in res}
-        for k, v in res.items():
-            if k in ['pred', 'gt']:
-                value = v
-            else:
-                value = np.mean(v)
-            agg_res[k].append(value)
-        return agg_res
-    
-    def agg_mean(self, results):
-        for k in results:
-            if k in ['pred', 'gt']:
-                results[k] = results[k][0]
-            elif k is 'l2_loss':
-                results[k] = np.mean(results[k])
-            else:
-                raise KeyError('Unknown target')
-        return results
+        return {'top1': tf.nn.in_top_k(outputs['pred'], inputs['labels'], 1),
+                'top5': tf.nn.in_top_k(outputs['pred'], inputs['labels'], 5)}
 
 
     def subselect_tfrecords(self, path):
@@ -231,6 +221,15 @@ class Experiment():
             retval[target] = outputs[target]
         return retval
 
+    def online_agg_mean(self, agg_res, res, step):
+        """
+        Appends the mean value for each key
+        """
+        if agg_res is None:
+            agg_res = {k: [] for k in res}
+        for k, v in res.items():
+            agg_res[k].append(np.mean(v))
+        return agg_res    
 
 class cifar10(Experiment):
     class Config():
