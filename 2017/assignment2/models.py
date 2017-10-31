@@ -418,6 +418,7 @@ def conv(inp,
             print ' deconv'
             shp = tf.shape(inp)
             out_shape = [shp[0], shp[1] * strides[1], shp[2] * strides[1], out_depth]
+            print out_shape
             conv = tf.nn.conv2d_transpose(inp, kernel, out_shape,
                                 strides=strides,
                                 padding=padding)
