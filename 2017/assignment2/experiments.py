@@ -93,7 +93,6 @@ class Experiment():
                         '_targets_$all': 'inputs'
                     },
                     'agg_func': tf.reduce_mean,
-                    'batch_size': self.Config.batch_size,
                 },
                 'num_steps': self.Config.val_steps,
             }
