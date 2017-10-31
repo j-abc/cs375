@@ -3,6 +3,7 @@ import os
 import numpy as np
 import tensorflow as tf
 from tfutils import base, data, model, optimizer, utils
+import dill
 
 if __name__ == '__main__':
     '''
@@ -36,3 +37,4 @@ if __name__ == '__main__':
         base.train_from_params(**params)
     else:
         print(params)
+        print(dill.pickles(params))

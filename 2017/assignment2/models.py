@@ -277,7 +277,7 @@ def colorful_model(inputs, train=True, norm=True, **kwargs):
             activation = None,
             )
 
-    return outputs, outputs['conv1_1']
+    return outputs, {}
 
 
 def max_pool(x, ksize, strides,  name='pool', padding='SAME', layer = None):
