@@ -244,7 +244,7 @@ class imagenet(Experiment):
         """
         # provided [edit these]
         fnDataProvider = ImageNetDataProvider
-        batch_size = 128
+        batch_size = 256
         data_path = '/datasets/TFRecord_Imagenet_standard'
         seed = 6
         crop_size = 224
