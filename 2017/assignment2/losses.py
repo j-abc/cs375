@@ -8,7 +8,8 @@ def colorful_loss(inputs, outputs, **target_params):
     print outputs
     flat_pred = tf.reshape(outputs['pred'], [-1, 313])
     flat_gt_ab_313 = tf.reshape(outputs['gt_ab_313'], [-1,313])
-    return tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits(logits=flat_pred, labels=flat_gt_ab_313))
+    loss = tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits(logits=flat_pred, labels=flat_gt_ab_313))
+    return loss / target_params['batch_size']
 
 def vae_loss(inputs, outputs):
     # extract vars
