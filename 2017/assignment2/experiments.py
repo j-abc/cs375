@@ -156,8 +156,8 @@ class Experiment():
             'collname': self.model.collname,
             'exp_id': self.exp_id,
             'save_valid_freq': 500,
-            'save_filters_freq': 1500,
-            'cache_filters_freq': 2500,
+            'save_filters_freq': 200,
+            'cache_filters_freq': 200,
             'save_metrics_freq': 200,
             'save_initial_filters' : False,
             'save_to_gfs': [],            
@@ -191,6 +191,14 @@ class Experiment():
         return {'top1': tf.nn.in_top_k(outputs['pred'], inputs['labels'], 1),
                 'top5': tf.nn.in_top_k(outputs['pred'], inputs['labels'], 5)}
 
+    def custom_loss(self, inputs, outputs):
+        """
+        Implements the same loss for validation as for training
+
+        You will need to EDIT this part. Implement the top1 and top5 functions
+        in the respective dictionary entry.
+        """
+        return {'custom_loss': self.model.loss_fn(inputs,outputs)}
 
     def subselect_tfrecords(self, path):
         """
