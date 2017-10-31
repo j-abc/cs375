@@ -4,6 +4,9 @@ import tensorflow as tf
 from tfutils import base, data, model, optimizer, utils
 from dataprovider import CIFAR10DataProvider, ImageNetDataProvider
 
+def piecewise_constant_wrapper(global_step, boundaries, values):
+    return tf.train.piecewise_constant(global_step, boundaries, values) 
+
 class Experiment():
     def __init__(self, model, exp_id):
         self.model = model
@@ -121,10 +124,7 @@ class Experiment():
 
         """
         learning_rate_params defines the learning rate, decay and learning function.
-        """
-        def piecewise_constant_wrapper(global_step, boundaries, values):
-            return tf.train.piecewise_constant(global_step, boundaries, values)  
-        
+        """ 
         params['learning_rate_params'] = self.Config.learning_rate_params
 
         """
