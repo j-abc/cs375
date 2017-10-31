@@ -4,17 +4,19 @@ import numpy as np
 import tensorflow as tf
 from tfutils import base, data, model, optimizer, utils
 import dill
+import sys
 
 if __name__ == '__main__':
     '''
     this thing gon run it all
     '''
+    print (sys.argv)
     # extract inputs
     model_name   = 'colorful_model'
     data_name    = 'imagenet'
     loss_name    = 'colorful_loss'
     exp_id       = 'experiment2'
-    run_now      = 'True'
+    run_now      = 'False'
     
     if run_now == 'True':
         run_now = True

@@ -1,0 +1,7 @@
+{
+	"model_name"   : "colorful_model",
+    "data_name"    : "imagenet",
+    "loss_name"    : "colorful_loss",
+    "exp_id"       : "experiment2",
+    "run_now"      : "True",
+}
