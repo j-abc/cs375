@@ -3,6 +3,7 @@ import numpy as np
 import tensorflow as tf
 from tfutils import base, data, model, optimizer, utils
 from dataprovider import CIFAR10DataProvider, ImageNetDataProvider
+from losses import *
 
 class Experiment():
     def __init__(self, model, exp_id):
@@ -84,8 +85,13 @@ class Experiment():
                     'batch_size': self.Config.batch_size,
                     'shuffle': False,
                     'shuffle_seed': self.Config.seed,
+                    'file_grab_func': self.subselect_tfrecords,
                     'n_threads': 4,
                 },
+                'targets': {
+                    'func': lambda i, o : val_loss_wrapper(i, o, self.model.loss_fn), # using our loss function for validation
+                },
+                '''
                 'targets': {
                     'func': self.model.loss_fn,
                     'target': ['labels'],
@@ -94,7 +100,10 @@ class Experiment():
                     },
                     'agg_func': tf.reduce_mean,
                 },
-                'num_steps': self.Config.val_steps,
+                '''
+                'num_steps': self.Config.val_steps,                
+                'agg_func': self.agg_mean, 
+                'online_agg_func': self.online_agg_mean,    
             }
         }
         """
@@ -111,7 +120,7 @@ class Experiment():
         loss_params defines your training loss.
         """
         params['loss_params'] = {
-            'targets': ['labels'],
+            'targets': ['images'],
             'agg_func': tf.reduce_mean,
             'loss_per_case_func': self.model.loss_fn,
             'loss_per_case_func_params' : {'_outputs': 'outputs', 
@@ -124,6 +133,8 @@ class Experiment():
         """
         def piecewise_constant_wrapper(global_step, boundaries, values):
             return tf.train.piecewise_constant(global_step, boundaries, values)  
+
+        params['skip_check'] = True
         
         # this params taken from the tutorial
         params['learning_rate_params'] = {
@@ -153,12 +164,6 @@ class Experiment():
             'dbname': self.model.dbname,
             'collname': self.model.collname,
             'exp_id': self.exp_id,
-            '''
-            'save_valid_freq': 10000,
-            'save_filters_freq': 30000,
-            'cache_filters_freq': 50000,
-            'save_metrics_freq': 200,
-            '''
             'save_valid_freq': 200, # 10000, in as1
             'save_filters_freq': 1000, # 30000, in as1
             'cache_filters_freq': 1000, # 50000, in as1
@@ -181,19 +186,29 @@ class Experiment():
         }
         return params
     
-    def agg_mean(self, x):
-        return {k: np.mean(v) for k, v in x.items()}
-
-
-    def in_top_k(self, inputs, outputs):
+    def online_agg_mean(self, agg_res, res, step):
         """
-        Implements top_k loss for validation
-
-        You will need to EDIT this part. Implement the top1 and top5 functions
-        in the respective dictionary entry.
+        Appends the mean value for each key
         """
-        return {'top1': tf.nn.in_top_k(outputs['pred'], inputs['labels'], 1),
-                'top5': tf.nn.in_top_k(outputs['pred'], inputs['labels'], 5)}
+        if agg_res is None:
+            agg_res = {k: [] for k in res}
+        for k, v in res.items():
+            if k in ['pred', 'gt']:
+                value = v
+            else:
+                value = np.mean(v)
+            agg_res[k].append(value)
+        return agg_res
+    
+    def agg_mean(self, results):
+        for k in results:
+            if k in ['pred', 'gt']:
+                results[k] = results[k][0]
+            elif k is 'l2_loss':
+                results[k] = np.mean(results[k])
+            else:
+                raise KeyError('Unknown target')
+        return results
 
 
     def subselect_tfrecords(self, path):
@@ -216,15 +231,6 @@ class Experiment():
             retval[target] = outputs[target]
         return retval
 
-    def online_agg_mean(self, agg_res, res, step):
-        """
-        Appends the mean value for each key
-        """
-        if agg_res is None:
-            agg_res = {k: [] for k in res}
-        for k, v in res.items():
-            agg_res[k].append(np.mean(v))
-        return agg_res    
 
 class cifar10(Experiment):
     class Config():

@@ -30,7 +30,7 @@ def vae_loss(inputs, outputs):
         1)
     return tf.reduce_mean(log_px_given_z + kl_div)
 
-def autoencoder_loss(inputs, outputs, **target_params):
+def autoencoder_loss(inputs, outputs):
     print("INPUTS")
     print(inputs)
     print("OUTPUTS")
