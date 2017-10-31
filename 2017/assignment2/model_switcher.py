@@ -23,7 +23,7 @@ class model_switcher:
         my_model = model_switcher(model_name = 'layers', data_name = 'cifar10')
         # now we can access dbname, collname, and layers from my_model
     '''
-    def __init__(self, model_name = 'herpaderp', data_name = 'cifar10', loss_name = 'default', exp_id = 'yesyes'):
+    def __init__(self, model_name = 'herpaderp', data_name = 'cifar10', loss_name = 'default', exp_id = 'yesyes', devices = None):
         '''
         sets up parameters/def associated with a given model and dataset
         '''

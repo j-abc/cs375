@@ -3,5 +3,6 @@
     "data_name"    : "cifar10",
     "loss_name"    : "colorful_loss",
     "exp_id"       : "experiment2",
-    "run_now"      : "True"
+    "run_now"      : "True",
+    "devices"      : ["/gpu:1"]
 }
