@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 from color_utils import preprocess
 
-def colorful_loss(inputs, outputs):
+def colorful_loss(inputs, outputs, **target_params):
     print inputs
     print outputs
     flat_pred = tf.reshape(outputs['pred'], [-1, 313])
