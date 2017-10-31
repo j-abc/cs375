@@ -127,8 +127,8 @@ class Experiment():
         
         params['learning_rate_params'] = {
             'func': piecewise_constant_wrapper,
-            'boundaries': list(np.array([150000, 300000, 450000]).astype(np.int64)),
-            'values': [0.01, 0.005, 0.001, 0.0005]            
+            'boundaries': list(np.array([200000, 375000]).astype(np.int64)),
+            'values': [3e-5, 1e-5, 3e-6]            
         }
 
         """
