@@ -248,7 +248,7 @@ class imagenet(Experiment):
         data_path = '/datasets/TFRecord_Imagenet_standard'
         seed = 6
         crop_size = 224
-        thres_loss = 1000 # dafuq does this mean?
+        thres_loss = 1000000000000000 # dafuq does this mean?
         n_epochs = 90
         
         # calculated
