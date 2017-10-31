@@ -125,20 +125,16 @@ class Experiment():
         def piecewise_constant_wrapper(global_step, boundaries, values):
             return tf.train.piecewise_constant(global_step, boundaries, values)  
         
-        params['learning_rate_params'] = {
-            'func': piecewise_constant_wrapper,
-            'boundaries': list(np.array([200000, 375000]).astype(np.int64)),
-            'values': [3e-5, 1e-5, 3e-6]            
-        }
+        params['learning_rate_params'] = self.Config.learning_rate_params
 
         """
         optimizer_params defines the optimizer.
         """
         params['optimizer_params'] = {
             'func': optimizer.ClipOptimizer,
-            'optimizer_class': tf.train.MomentumOptimizer,
+            'optimizer_class': tf.train.AdamOptimizer,
             'clip': False,
-            'momentum': .9,            
+            #'momentum': .9,            
         }
 
         """
@@ -228,6 +224,12 @@ class cifar10(Experiment):
         crop_size = 24
         thres_loss = 1000000000000000
         n_epochs = 60
+
+        learning_rate_params = {
+            'func': piecewise_constant_wrapper,
+            'boundaries': list(np.array([200000, 375000]).astype(np.int64)),
+            'values': [3e-5, 1e-5, 3e-6]            
+        }
         
         # calculated
         train_steps = fnDataProvider.N_TRAIN / batch_size * n_epochs
@@ -250,6 +252,12 @@ class imagenet(Experiment):
         crop_size = 224
         thres_loss = 1000000000000000 # dafuq does this mean?
         n_epochs = 90
+
+        learning_rate_params = {
+            'func': piecewise_constant_wrapper,
+            'boundaries': list(np.array([200000, 375000]).astype(np.int64)),
+            'values': [3e-5, 1e-5, 3e-6]            
+        }
         
         # calculated
         train_steps = fnDataProvider.N_TRAIN / batch_size * n_epochs
