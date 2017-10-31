@@ -31,6 +31,17 @@ def vae_loss(inputs, outputs):
     return tf.reduce_mean(log_px_given_z + kl_div)
 
 def autoencoder_loss(inputs, outputs):
-    x_tensor = outputs['x_tensor']
-    y = outputs['y']
-    return tf.reduce_sum(tf.square(y - x_tensor))
+    print("INPUTS")
+    print(inputs)
+    print("OUTPUTS")
+    #print(outputs['pred'])
+    return     tf.nn.l2_loss(outputs['images'] - outputs['pred'])
+
+def vae_loss(inputs, outputs):
+    print("INPUTS")
+    print(inputs)
+    print("OUTPUTS")
+    #print(outputs['pred'])
+    return {'l2_loss':tf.nn.l2_loss(outputs['images'] - outputs['pred']),
+            'pred':outputs['pred'],
+            'gt':inputs['images']}

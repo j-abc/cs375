@@ -23,6 +23,7 @@ class model_switcher:
         my_model = model_switcher(model_name = 'layers', data_name = 'cifar10')
         # now we can access dbname, collname, and layers from my_model
     '''
+    
     def __init__(self, model_name = 'herpaderp', data_name = 'cifar10', loss_name = 'default', exp_id = 'yesyes'):
         '''
         sets up parameters/def associated with a given model and dataset
@@ -49,7 +50,8 @@ class model_switcher:
             'herpaderp':['test', 'test','test'],
             'tiny_model': ['blah'],
             'colorful_model':['oh','hi'],
-            'VAE':['oh', 'geez', 'why']
+            'VAE':['oh', 'geez', 'why'],
+            'shallow_bottle':['conv1','deconv1']
         }
         if model_name not in layer_dict.keys():
             raise Exception('Model layer names not specified')
@@ -84,7 +86,8 @@ class model_switcher:
         default_dict = {
             'autoencoder':'autoencoder_loss',
             'VAE':'vae_loss',
-            'colorful_model': 'colorful_loss'
+            'colorful_model': 'colorful_loss',
+            'shallow_bottle':'autoencoder_loss'
         }
         if loss_name == 'default':
             loss_name = default_dict[model_name]
@@ -94,7 +97,9 @@ class model_switcher:
             return getattr(losses, loss_name)
         else:
             raise Exception('Loss name not found in losses.py')
-            
+
+# may make this a dictionary of dictionaries
+
 # what do we switch here...
 # shallow bottleneck convolutional autoencoder:
     # loss: L2 reconsturciton distance between original image nad predicted output
