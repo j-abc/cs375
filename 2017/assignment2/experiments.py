@@ -198,7 +198,11 @@ class Experiment():
         You will need to EDIT this part. Implement the top1 and top5 functions
         in the respective dictionary entry.
         """
-        return {'custom_loss': self.model.loss_fn(inputs,outputs)}
+        return {
+            'custom_loss': self.model.loss_fn(inputs,outputs),
+            'pred':outputs['pred'],
+            'gt':inputs['images']
+        }
 
     def subselect_tfrecords(self, path):
         """
