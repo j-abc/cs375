@@ -83,7 +83,7 @@ class NNEncode():
         self.K = self.cc.shape[0]
         self.NN = int(NN)
         self.sigma = sigma
-        self.nbrs = nn.NearestNeighbors(n_neighbors=NN, algorithm='ball_tree').fit(self.cc)
+        self.nbrs = nn.NearestNeighbors(n_neighbors=self.NN, algorithm='ball_tree').fit(self.cc)
 
         self.alreadyUsed = False
 
@@ -100,7 +100,6 @@ class NNEncode():
             self.p_inds = np.arange(0,P,dtype='int')[:,na()]
 
         P = pts_flt.shape[0]
-
         (dists,inds) = self.nbrs.kneighbors(pts_flt)
 
         wts = np.exp(-dists**2/(2*self.sigma**2))
@@ -205,7 +204,7 @@ def _prior_boost(gt_ab_313):
   Returns:
     prior_boost: (N, H, W, 1)
   '''
-  enc_dir = './resources'
+  enc_dir = ''
   gamma = 0.5
   alpha = 1.0
 
@@ -282,7 +281,7 @@ def decode(data_l, conv8_313, rebalance=1):
   _, height, width, _ = data_l.shape
   data_l = data_l[0, :, :, :]
   conv8_313 = conv8_313[0, :, :, :]
-  enc_dir = './resources'
+  enc_dir = ''
   conv8_313_rh = conv8_313 * rebalance
   class8_313_rh = softmax(conv8_313_rh)
 
