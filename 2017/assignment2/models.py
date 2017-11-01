@@ -228,7 +228,7 @@ def shallow_bottle(inputs, train = True, norm = True, **kwargs):
     outputs['conv1'], outputs['conv1_kernel'] = conv(outputs['images'], 
                                                      64, 
                                                      ksize=7, 
-                                                     strides=16, 
+                                                     strides=4, 
                                                      padding = 'SAME', 
                                                      layer = 'conv1',
                                                      activation = 'relu')
@@ -241,9 +241,9 @@ def shallow_bottle(inputs, train = True, norm = True, **kwargs):
     print inputs['images'].get_shape().as_list()
     outputs['deconv1'], outputs['deconv1_kernel'] = deconv(outputs['conv1'], 
                                                            out_shape,
-                                                           ksize=16,
-                                                           strides=16,
-                                                           padding = 'SAME',
+                                                           ksize=7,
+                                                           strides=4,
+                                                           padding = 'VALID',
                                                            layer = 'deconv1')
     # outputs['out'] 
     outputs['pred'] = outputs['deconv1']
@@ -262,7 +262,7 @@ def stuff(inputs, train = True, norm = True, **kwargs):
     outputs['conv1'], outputs['conv1_kernel'] = conv(outputs['images'], 
                                                      64, 
                                                      ksize=7, 
-                                                     strides=16, 
+                                                     strides=4, 
                                                      padding = 'VALID', 
                                                      layer = 'conv1',
                                                      activation = 'relu')

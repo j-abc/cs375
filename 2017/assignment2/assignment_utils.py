@@ -55,18 +55,19 @@ def p22_training(exp_id, coll):
     plt.show()
     
 # Gets the validation data from the database
-def get_validation_data(exp_id, coll):
+def get_validation_data(exp_id, coll, num = 10):
 
     q_val = {'exp_id' : exp_id, 'validation_results' : {'$exists' : True}, 'validates' : {'$exists' : False}}
-    val_steps = coll.find(q_val, projection = ['validation_results'])
-    l2_loss = [val_steps[i]['validation_results']['valid0']['l2_loss'] 
-        for i in range(0, val_steps.count(), 10)]
-    img_inputs = [val_steps[i]['validation_results']['valid0']['gt'] 
-        for i in range(0, val_steps.count(), 10)]
-    img_prediction = [val_steps[i]['validation_results']['valid0']['pred']
-        for i in range(0, val_steps.count(), 10)]
-    return l2_loss, img_inputs, img_prediction
 
+    val_steps = coll.find(q_val, projection = ['validation_results'])
+    my_range = round(np.linspace(0, val_steps.count(), num)).tolist()
+    l2_loss = [val_steps[i]['validation_results']['valid0']['l2_loss'] 
+        for i in my_range]
+    img_inputs = [val_steps[i]['validation_results']['valid0']['gt'] 
+        for i in my_range]
+    img_prediction = [val_steps[i]['validation_results']['valid0']['pred']
+        for i in my_range]
+    return l2_loss, img_inputs, img_prediction
 def plot_l2_loss(l2_loss, exp_id):
 
 # We have provided a function that pulls the necessary data from the database. Your task is to plot the validation curve of the top1 and top5 accuracy. Label the graphs respectively and describe what you see.    

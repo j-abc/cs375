@@ -84,7 +84,7 @@ class Experiment():
                     'group': 'val',
                     'crop_size': self.Config.crop_size,
                     # TFRecords (super class) data provider arguments
-                    'file_pattern': 'validation*.tfrecords',
+                    'file_pattern': self.Config.file_pattern,
                     'batch_size': self.Config.batch_size,
                     'shuffle': False,
                     'shuffle_seed': self.Config.seed,
@@ -94,9 +94,9 @@ class Experiment():
                 'queue_params': {'queue_type': 'fifo',
                                  'batch_size': self.Config.batch_size},                
                 'targets': {'func': lambda i, o : val_loss_wrapper(i, o, self.model.loss_fn)},
+                'online_agg_func': self.online_agg_mean,
+                'agg_func': self.agg_mean,
                 'num_steps': self.Config.val_steps,
-                'agg_func': self.agg_mean, 
-                'online_agg_func': self.online_agg_mean,    
             }
         }
         '''
@@ -186,9 +186,8 @@ class Experiment():
         }
         return params
     
-    def agg_mean(self, x):
-        return {k: np.mean(v) for k, v in x.items()}
-
+    #def agg_mean(self, x):
+    #    return {k: np.mean(v) for k, v in x.items()}
 
     def in_top_k(self, inputs, outputs):
         """
@@ -211,7 +210,6 @@ class Experiment():
         return [os.path.join(path, fn) for fn in all_filenames
                 if fn.endswith('.tfrecords')]
 
-
     def return_outputs(self, inputs, outputs, targets, **kwargs):
         """
         Illustrates how to extract desired targets from the model
@@ -220,7 +218,7 @@ class Experiment():
         for target in targets:
             retval[target] = outputs[target]
         return retval
-
+    '''
     def online_agg_mean(self, agg_res, res, step):
         """
         Appends the mean value for each key
@@ -230,7 +228,30 @@ class Experiment():
         for k, v in res.items():
             agg_res[k].append(np.mean(v))
         return agg_res    
+    '''
+    def online_agg_mean(self, agg_res, res, step):
+        """
+        Appends the mean value for each key
+        """
+        if agg_res is None:
+            agg_res = {k: [] for k in res}
+        for k, v in res.items():
+            if k in ['pred', 'gt']:
+                value = v
+            else:
+                value = np.mean(v)
+            agg_res[k].append(value)
+        return agg_res
 
+    def agg_mean(self, results):
+        for k in results:
+            if k in ['pred', 'gt']:
+                results[k] = results[k][0]
+            elif k is 'l2_loss':
+                results[k] = np.mean(results[k])
+            else:
+                raise KeyError('Unknown target')
+        return results
 class cifar10(Experiment):
     class Config():
         # provided [edit these]
@@ -241,6 +262,7 @@ class cifar10(Experiment):
         crop_size = 24
         thres_loss = 1000000000000000
         n_epochs = 60
+        file_pattern = 'test*.tfrecords'
         
         # calculated
         train_steps = fnDataProvider.N_TRAIN / batch_size * n_epochs
@@ -263,6 +285,7 @@ class imagenet(Experiment):
         crop_size = 224
         thres_loss = 1000000000000000 # dafuq does this mean?
         n_epochs = 90
+        file_pattern = 'validation*.tfrecords'
         
         # calculated
         train_steps = fnDataProvider.N_TRAIN / batch_size * n_epochs
