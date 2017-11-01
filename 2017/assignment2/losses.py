@@ -10,7 +10,7 @@ def colorful_loss(inputs, outputs, **target_params):
     loss = tf.nn.softmax_cross_entropy_with_logits(logits=flat_pred, labels=flat_gt_ab_313)
     return loss# / batch_size
 
-def vae_loss(inputs, outputs):
+def vae_loss(inputs, outputs, **target_params):
     # extract vars
     x = tf.contrib.layers.flatten(outputs['images'])
     y = tf.contrib.layers.flatten (outputs['pred'])
