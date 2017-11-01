@@ -12,8 +12,8 @@ def colorful_loss(inputs, outputs, **target_params):
 
 def vae_loss(inputs, outputs):
     # extract vars
-    x = outputs['images']
-    y = outputs['y']
+    x = tf.contrib.layers.flatten(outputs['images'])
+    y = tf.contrib.layers.flatten (outputs['y'])
     z_log_sigma = outputs['z_logstd']
     z_mu = outputs['z_mean']
 
