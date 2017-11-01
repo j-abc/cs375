@@ -176,11 +176,11 @@ def vae_model(inputs, train=True, norm=True, **kwargs):
     )
     # reparameterization trick
     noise = tf.random_normal([1, zdim])
-    outputs['latent_encoding'] = tf.add(output['z_mean'], tf.multiply(noise, tf.exp(.5*output['z_logstd'])), name='latent_encoding')
-    current_layer = output['latent_encoding']
+    outputs['latent_encoding'] = tf.add(outputs['z_mean'], tf.multiply(noise, tf.exp(.5*outputs['z_logstd'])), name='latent_encoding')
+    current_layer = outputs['latent_encoding']
     # decoding layers
     ## start by the last encoding layer outshape
-    out_shp = output[encoding_layernames[-1]].get_shape().as_list()
+    out_shp = outputs[encoding_layernames[-1]].get_shape().as_list()
     dec0 = fc(current_layer, shp[1]*shp[2]*shp[3],
         weight_decay=weight_decay,
         activation=None,
