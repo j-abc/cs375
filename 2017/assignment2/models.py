@@ -144,7 +144,7 @@ def vae_model(inputs, train=True, norm=True, **kwargs):
     for i,layer_name in enumerate(encoding_layernames):
         outputs[layer_name], outputs[layer_name + '_kernel'] = conv(
             current_layer,
-            channels[i],
+            encoding_channels[i],
             ksize=encoding_ksizes[i],
             strides=encoding_strides[i],
             padding='SAME',
@@ -194,7 +194,7 @@ def vae_model(inputs, train=True, norm=True, **kwargs):
     for i,layer_name in enumerate(decoding_layernames):
         outputs[layer_name], outputs[layer_name + '_kernel'] = conv(
             current_layer,
-            channels[i],
+            decoding_channels[i],
             ksize=decoding_ksizes[i],
             strides=decoding_strides[i],
             padding='SAME',
