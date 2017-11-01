@@ -156,7 +156,7 @@ def vae_model(inputs, train=True, norm=True, **kwargs):
         current_layer = outputs[layer_name]
     # z, and sigma_z
     output['z_mean'] = fc(current_layer,
-        nz,
+        zdim,
         bias=1,
         weight_decay=weight_decay,
         activation=None,
@@ -166,7 +166,7 @@ def vae_model(inputs, train=True, norm=True, **kwargs):
         dropout = dropout,
     )
     output['z_logstd'] = fc(current_layer,
-        nz,
+        zdim,
         weight_decay=weight_decay,
         activation=None,
         batch_norm=False,
