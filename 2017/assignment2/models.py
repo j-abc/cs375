@@ -185,8 +185,8 @@ def vae_model(inputs, train=True, norm=True, **kwargs):
         weight_decay=weight_decay,
         activation=None,
         batch_norm=False,
-        name='z_logstd',
-        layer='z_logstd',
+        name='dec0',
+        layer='dec0',
     )
     outputs['dec0'] = tf.reshape(dec0, out_shp)
     current_layer = outputs['dec0']
