@@ -53,7 +53,8 @@ class model_switcher:
             'conv4_2','conv4_3','conv5_1','conv5_2','conv5_3',
             'conv6_1','conv6_2','conv6_3','conv7_1','conv7_2',
             'conv7_3','conv8_1','conv8_2','conv8_3','pred'],
-            'VAE':['oh', 'geez', 'why']
+            'vae_model':['enc' + str(i) for range(1,4)] + \
+            ['dec' + str(i) for range(1,4)] + ['z_mean', 'z_logstd', 'dec0'],
         }
         if model_name not in layer_dict.keys():
             raise Exception('Model layer names not specified')

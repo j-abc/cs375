@@ -12,10 +12,10 @@ def colorful_loss(inputs, outputs, **target_params):
 
 def vae_loss(inputs, outputs):
     # extract vars
-    x = outputs['x']
+    x = outputs['images']
     y = outputs['y']
-    z_log_sigma = outputs['z_log_sigma']
-    z_mu = outputs['z_mu']
+    z_log_sigma = outputs['z_logstd']
+    z_mu = outputs['z_mean']
 
     # p(x|z)
     log_px_given_z = -tf.reduce_sum(

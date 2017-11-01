@@ -119,86 +119,104 @@ def autoencoder(input_shape=[None, 784],
 
 
 # variational autoencoder
-def VAE(input_shape=[None, 784],
-        n_components_encoder=2048,
-        n_components_decoder=2048,
-        n_hidden=2,
-        debug=False):
-    # %%
-    # Input placeholder
-    if debug:
-        input_shape = [50, 784]
-        x = tf.Variable(np.zeros((input_shape), dtype=np.float32))
-    else:
-        x = tf.placeholder(tf.float32, input_shape)
+def vae_model(inputs, train=True, norm=True, **kwargs):
+    # create outputs
+    # get input shape
+    in_shp = inputs['images'].get_shape().as_list()
+    outputs = inputs
+    encoding_layernames = ['enc' + str(i) for range(1,4)]
+    encoding_ksizes = [3, 3, 3]
+    encoding_strides = [2, 2, 2]
+    encoding_channels = [32, 64, 128]
+    encoding_bns = [False, True, False]
 
-    activation = tf.nn.softplus
+    decoding_layernames = ['dec' + str(i) for range(1,4)]
+    decoding_ksizes = [3, 3, 3]
+    decoding_strides = [2, 2, 2]
+    decoding_channels = [64, 32, in_shp[-1]]
+    decoding_bns = [True, False, True]
 
-    dims = x.get_shape().as_list()
-    n_features = dims[1]
-
-    W_enc1 = weight_variable([n_features, n_components_encoder])
-    b_enc1 = bias_variable([n_components_encoder])
-    h_enc1 = activation(tf.matmul(x, W_enc1) + b_enc1)
-
-    W_enc2 = weight_variable([n_components_encoder, n_components_encoder])
-    b_enc2 = bias_variable([n_components_encoder])
-    h_enc2 = activation(tf.matmul(h_enc1, W_enc2) + b_enc2)
-
-    W_enc3 = weight_variable([n_components_encoder, n_components_encoder])
-    b_enc3 = bias_variable([n_components_encoder])
-    h_enc3 = activation(tf.matmul(h_enc2, W_enc3) + b_enc3)
-
-    W_mu = weight_variable([n_components_encoder, n_hidden])
-    b_mu = bias_variable([n_hidden])
-
-    W_log_sigma = weight_variable([n_components_encoder, n_hidden])
-    b_log_sigma = bias_variable([n_hidden])
-
-    z_mu = tf.matmul(h_enc3, W_mu) + b_mu
-    z_log_sigma = 0.5 * (tf.matmul(h_enc3, W_log_sigma) + b_log_sigma)
-
-    # %%
-    # Sample from noise distribution p(eps) ~ N(0, 1)
-    if debug:
-        epsilon = tf.random_normal(
-            [dims[0], n_hidden])
-    else:
-        epsilon = tf.random_normal(
-            tf.stack([tf.shape(x)[0], n_hidden]))
-
-    # Sample from posterior
-    z = z_mu + tf.exp(z_log_sigma) * epsilon
-
-    W_dec1 = weight_variable([n_hidden, n_components_decoder])
-    b_dec1 = bias_variable([n_components_decoder])
-    h_dec1 = activation(tf.matmul(z, W_dec1) + b_dec1)
-
-    W_dec2 = weight_variable([n_components_decoder, n_components_decoder])
-    b_dec2 = bias_variable([n_components_decoder])
-    h_dec2 = activation(tf.matmul(h_dec1, W_dec2) + b_dec2)
-
-    W_dec3 = weight_variable([n_components_decoder, n_components_decoder])
-    b_dec3 = bias_variable([n_components_decoder])
-    h_dec3 = activation(tf.matmul(h_dec2, W_dec3) + b_dec3)
-
-    W_mu_dec = weight_variable([n_components_decoder, n_features])
-    b_mu_dec = bias_variable([n_features])
-    y = tf.nn.sigmoid(tf.matmul(h_dec3, W_mu_dec) + b_mu_dec)
-
-    # p(x|z)
-    log_px_given_z = -tf.reduce_sum(
-        x * tf.log(y + 1e-10) +
-        (1 - x) * tf.log(1 - y + 1e-10), 1)
-
-    # d_kl(q(z|x)||p(z))
-    # Appendix B: 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
-    kl_div = -0.5 * tf.reduce_sum(
-        1.0 + 2.0 * z_log_sigma - tf.square(z_mu) - tf.exp(2.0 * z_log_sigma),
-        1)
-    loss = tf.reduce_mean(log_px_given_z + kl_div)
-
-    return {'cost': loss, 'x': x, 'z': z, 'y': y}
+    zdim = 10
+    weight_decay = 1e-3
+    dropout = .5 if train else None
+    # encoding layers
+    current_layer = outputs['images']
+    for i,layer_name in enumerate(encoding_layernames):
+        if strides[i] < 1:
+            deconv = True
+            ksize = 4
+            strides[i] = int(round(1 / strides[i]))
+            print strides[i]
+        else:
+            deconv = False
+            ksize = 3
+        outputs[layer_name], outputs[layer_name + '_kernel'] = conv(
+            current_layer,
+            channels[i],
+            ksize=encoding_ksizes[i],
+            strides=encoding_strides[i],
+            padding='SAME',
+            weight_decay=weight_decay,
+            name=layer_name,
+            layer = layer_name,
+            batch_norm = encoding_bns[i],
+            dropout = dropout,
+            )
+        current_layer = outputs[layer_name]
+    # z, and sigma_z
+    output['z_mean'] = fc(current_layer,
+        nz,
+        bias=1,
+        weight_decay=weight_decay,
+        activation=None,
+        batch_norm=False,
+        name='z_mean',
+        layer='z_mean',
+        dropout = dropout,
+    )
+    output['z_logstd'] = fc(current_layer,
+        nz,
+        weight_decay=weight_decay,
+        activation=None,
+        batch_norm=False,
+        name='z_logstd',
+        layer='z_logstd',
+        dropout = dropout,
+    )
+    # reparameterization trick
+    noise = tf.random_normal([1, zdim])
+    output['latent_encoding'] = tf.add(output['z_mean'], tf.multiply(noise, tf.exp(.5*output['z_logstd'])), name='latent_encoding')
+    current_layer = output['latent_encoding']
+    # decoding layers
+    ## start by the last encoding layer outshape
+    out_shp = output[encoding_layernames[-1]].get_shape().as_list()
+    dec0 = fc(current_layer, shp[1]*shp[2]*shp[3]
+        weight_decay=weight_decay,
+        activation=None,
+        batch_norm=False,
+        name='z_logstd',
+        layer='z_logstd',
+    )
+    outputs['dec0'] = tf.reshape(dec0, out_shp)
+    current_layer = outputs['dec0']
+    for i,layer_name in enumerate(decoding_layernames):
+        outputs[layer_name], outputs[layer_name + '_kernel'] = conv(
+            current_layer,
+            channels[i],
+            ksize=decoding_ksizes[i],
+            strides=decoding_strides[i],
+            padding='SAME',
+            weight_decay=weight_decay,
+            name=layer_name,
+            layer = layer_name,
+            batch_norm = decoding_bns[i],
+            deconv = True,
+            dropout = dropout,
+            )
+        current_layer = outputs[layer_name]
+    # y
+    outputs['y'] = current_layer
+    return outputs, {}
 
 def colorful_model(inputs, train=True, norm=True, **kwargs):
     """
