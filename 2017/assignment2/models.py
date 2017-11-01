@@ -124,13 +124,13 @@ def vae_model(inputs, train=True, norm=True, **kwargs):
     # get input shape
     in_shp = inputs['images'].get_shape().as_list()
     outputs = inputs
-    encoding_layernames = ['enc' + str(i) for range(1,4)]
+    encoding_layernames = ['enc' + str(i) for i in range(1,4)]
     encoding_ksizes = [3, 3, 3]
     encoding_strides = [2, 2, 2]
     encoding_channels = [32, 64, 128]
     encoding_bns = [False, True, False]
 
-    decoding_layernames = ['dec' + str(i) for range(1,4)]
+    decoding_layernames = ['dec' + str(i) for i in range(1,4)]
     decoding_ksizes = [3, 3, 3]
     decoding_strides = [2, 2, 2]
     decoding_channels = [64, 32, in_shp[-1]]
