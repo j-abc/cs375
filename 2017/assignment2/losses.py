@@ -27,7 +27,7 @@ def vae_loss(inputs, outputs, **target_params):
     kl_div = -0.5 * tf.reduce_sum(
         1.0 + 2.0 * z_log_sigma - tf.square(z_mu) - tf.exp(2.0 * z_log_sigma),
         1)
-    return tf.reduce_sum(log_px_given_z + kl_div)
+    return log_px_given_z + kl_div
 
 def autoencoder_loss(inputs, outputs):
     x_tensor = outputs['x_tensor']
