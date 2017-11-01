@@ -23,13 +23,13 @@ def vae_model(inputs, train=True, norm=True, **kwargs):
     encoding_ksizes = [3, 3, 3]
     encoding_strides = [2, 2, 2]
     encoding_channels = [32, 64, 128]
-    encoding_bns = [False, True, False]
+    encoding_bns = [True, True, True]
 
     decoding_layernames = ['dec' + str(i) for i in range(1,4)]
     decoding_ksizes = [3, 3, 3]
     decoding_strides = [2, 2, 2]
     decoding_channels = [64, 32, in_shp[-1]]
-    decoding_bns = [True, False, True]
+    decoding_bns = [True, True, True]
 
     zdim = 20
     weight_decay = 1e-3
