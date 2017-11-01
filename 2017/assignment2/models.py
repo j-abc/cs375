@@ -142,14 +142,6 @@ def vae_model(inputs, train=True, norm=True, **kwargs):
     # encoding layers
     current_layer = outputs['images']
     for i,layer_name in enumerate(encoding_layernames):
-        if strides[i] < 1:
-            deconv = True
-            ksize = 4
-            strides[i] = int(round(1 / strides[i]))
-            print strides[i]
-        else:
-            deconv = False
-            ksize = 3
         outputs[layer_name], outputs[layer_name + '_kernel'] = conv(
             current_layer,
             channels[i],
