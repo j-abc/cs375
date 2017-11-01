@@ -155,7 +155,7 @@ def vae_model(inputs, train=True, norm=True, **kwargs):
             )
         current_layer = outputs[layer_name]
     # z, and sigma_z
-    output['z_mean'] = fc(current_layer,
+    outputs['z_mean'] = fc(current_layer,
         zdim,
         bias=1,
         weight_decay=weight_decay,
@@ -165,7 +165,7 @@ def vae_model(inputs, train=True, norm=True, **kwargs):
         layer='z_mean',
         dropout = dropout,
     )
-    output['z_logstd'] = fc(current_layer,
+    outputs['z_logstd'] = fc(current_layer,
         zdim,
         weight_decay=weight_decay,
         activation=None,
@@ -176,7 +176,7 @@ def vae_model(inputs, train=True, norm=True, **kwargs):
     )
     # reparameterization trick
     noise = tf.random_normal([1, zdim])
-    output['latent_encoding'] = tf.add(output['z_mean'], tf.multiply(noise, tf.exp(.5*output['z_logstd'])), name='latent_encoding')
+    outputs['latent_encoding'] = tf.add(output['z_mean'], tf.multiply(noise, tf.exp(.5*output['z_logstd'])), name='latent_encoding')
     current_layer = output['latent_encoding']
     # decoding layers
     ## start by the last encoding layer outshape
