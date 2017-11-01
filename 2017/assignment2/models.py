@@ -205,7 +205,7 @@ def vae_model(inputs, train=True, norm=True, **kwargs):
             )
         current_layer = outputs[layer_name]
     # y
-    outputs['y'] = current_layer
+    outputs['pred'] = current_layer
     return outputs, {}
 
 def colorful_model(inputs, train=True, norm=True, **kwargs):
