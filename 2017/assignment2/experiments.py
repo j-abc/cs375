@@ -83,7 +83,7 @@ class Experiment():
                     'group': 'val',
                     'crop_size': self.Config.crop_size,
                     # TFRecords (super class) data provider arguments
-                    'file_pattern': 'test*.tfrecords',
+                    'file_pattern': 'validation*.tfrecords',
                     'batch_size': self.Config.batch_size,
                     'shuffle': False,
                     'shuffle_seed': self.Config.seed,
@@ -201,7 +201,7 @@ class Experiment():
         return {
             'custom_loss': self.model.loss_fn(inputs,outputs),
             'pred':outputs['pred'],
-            'gt':inputs['images']
+            'gt':inputs['images'],
         }
 
     def subselect_tfrecords(self, path):
