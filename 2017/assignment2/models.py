@@ -216,6 +216,13 @@ def deconv(inp,
                                 scale=None, variance_epsilon=1e-8, name='batch_norm')    
     return output, kernel
 
+def hourglass(inputs, train = True, norm = True, **kwargs):
+    outputs = inputs
+    # layer i has same shape as layer n-i
+    # should we put sparseness on the hourglass? 
+    
+    # now... we gon make a DEEP bottle. 
+    return outputs, {}
 def shallow_bottle(inputs, train = True, norm = True, **kwargs):
     # propagate input targets
     outputs = inputs
@@ -228,7 +235,7 @@ def shallow_bottle(inputs, train = True, norm = True, **kwargs):
     outputs['conv1'], outputs['conv1_kernel'] = conv(outputs['images'], 
                                                      64, 
                                                      ksize=7, 
-                                                     strides=4, 
+                                                     strides=6, 
                                                      padding = 'SAME', 
                                                      layer = 'conv1',
                                                      activation = 'relu')
@@ -242,41 +249,7 @@ def shallow_bottle(inputs, train = True, norm = True, **kwargs):
     outputs['deconv1'], outputs['deconv1_kernel'] = deconv(outputs['conv1'], 
                                                            out_shape,
                                                            ksize=7,
-                                                           strides=4,
-                                                           padding = 'VALID',
-                                                           layer = 'deconv1')
-    # outputs['out'] 
-    outputs['pred'] = outputs['deconv1']
-    return outputs, {}
-    
-    
-def stuff(inputs, train = True, norm = True, **kwargs):
-    # propagate input targets
-    outputs = inputs
-    
-    print inputs['images'].get_shape().as_list()
-    print outputs['images'].get_shape().as_list()
-
-    
-    # create the encoder
-    outputs['conv1'], outputs['conv1_kernel'] = conv(outputs['images'], 
-                                                     64, 
-                                                     ksize=7, 
-                                                     strides=4, 
-                                                     padding = 'VALID', 
-                                                     layer = 'conv1',
-                                                     activation = 'relu')
-    
-    # create the decoder
-    my_shape =  outputs['images'].get_shape().as_list()
-    out_shape = [my_shape[0], my_shape[1], my_shape[2], my_shape[3]]
-    print("out shape")
-    print out_shape
-    print inputs['images'].get_shape().as_list()
-    outputs['deconv1'], outputs['deconv1_kernel'] = deconv(outputs['conv1'], 
-                                                           out_shape,
-                                                           ksize=12,
-                                                           strides=12,
+                                                           strides=6,
                                                            padding = 'VALID',
                                                            layer = 'deconv1')
     # outputs['out'] 
@@ -295,11 +268,11 @@ def pooled_shallow(inputs, train = True, norm = True, **kwargs):
     outputs['conv1'], outputs['conv1_kernel'] = conv(outputs['images'], 
                                                      64, 
                                                      ksize=7, 
-                                                     strides=4, 
-                                                     padding = 'VALID', 
+                                                     strides=3, 
+                                                     padding = 'SAME', 
                                                      layer = 'conv1',
                                                      activation = 'relu')
-    outputs['pool1'] = max_pool(outputs['conv1'], 3, 4, layer = 'pool1')    
+    outputs['pool1'] = max_pool(outputs['conv1'], 2, 2, layer = 'pool1', padding = 'SAME')    
         
     # create the decoder
     my_shape =  outputs['images'].get_shape().as_list()
@@ -307,9 +280,23 @@ def pooled_shallow(inputs, train = True, norm = True, **kwargs):
     outputs['deconv1'], outputs['deconv1_kernel'] = deconv(outputs['pool1'], 
                                                            out_shape,
                                                            ksize=7,
-                                                           strides=3,
+                                                           strides=6,
                                                            padding = 'VALID',
                                                            layer = 'deconv1')
     # outputs['out'] 
     outputs['pred'] = outputs['deconv1']
+    return outputs, {}
+
+
+def model_bottle(inputs, n_filters, filter_sizes, corruption = False):
+    # build our autoencoder
+    
+    # build our encoder
+        # 
+    
+    # build our decoder
+    
+    return outputs, {}
+
+def our_bottle(inputs, train = True, norm = True, **kwargs):
     return outputs, {}

@@ -60,14 +60,13 @@ def get_validation_data(exp_id, coll, num = 10):
     q_val = {'exp_id' : exp_id, 'validation_results' : {'$exists' : True}, 'validates' : {'$exists' : False}}
 
     val_steps = coll.find(q_val, projection = ['validation_results'])
-    my_range = round(np.linspace(0, val_steps.count(), num)).tolist()
-    l2_loss = [val_steps[i]['validation_results']['valid0']['l2_loss'] 
-        for i in my_range]
-    img_inputs = [val_steps[i]['validation_results']['valid0']['gt'] 
-        for i in my_range]
-    img_prediction = [val_steps[i]['validation_results']['valid0']['pred']
-        for i in my_range]
+    my_range = np.linspace(0, val_steps.count()-1, num).tolist()
+    my_range = set([int(round(i)) for i in my_range])
+    l2_loss = [val_steps[i]['validation_results']['valid0']['l2_loss'] for i in my_range]
+    img_inputs = [val_steps[i]['validation_results']['valid0']['gt'] for i in my_range]
+    img_prediction = [val_steps[i]['validation_results']['valid0']['pred'] for i in my_range]
     return l2_loss, img_inputs, img_prediction
+
 def plot_l2_loss(l2_loss, exp_id):
 
 # We have provided a function that pulls the necessary data from the database. Your task is to plot the validation curve of the top1 and top5 accuracy. Label the graphs respectively and describe what you see.    
@@ -82,12 +81,11 @@ def plot_l2_loss(l2_loss, exp_id):
     
     plt.show()
 
-def p_get_data_list(coll, collname, step, v, idx = -1):
-    exp_id = 'experiment_1_%s_%s_%s'%(str(step), collname, v)
+def p_get_data_list(coll, collname, step, v, exp_id, idx = -1):
+    #exp_id = 'experiment_1_%s_%s_%s'%(str(step), collname, v)
     def get_neural_validation_data(exp_id):
         q_val = {'exp_id' : exp_id, 'validation_results' : {'$exists' : True}, 'validates': {'$exists' : True}}
         val_steps = coll.find(q_val, projection = ['validation_results', 'validates', 'exp_id'])
-
         results = [val_steps[i] for i in range(val_steps.count())]
         for res in results:
             try:
@@ -158,7 +156,7 @@ def plot_categorization_results(data, target_layers, step, category=None):
         
         ### END OF YOUR CODE
         
-def plot_regression_results(data, target_layers, step):
+def plot_regression_results(data, target_layers):
     """
     Prints out the noise corrected multi rsquared loss for each layer.
     You will need to EDIT this function.
@@ -169,23 +167,21 @@ def plot_regression_results(data, target_layers, step):
             regression_results = data[k]
             ### YOUR CODE HERE
             calculated_regression_val = 1 - regression_results['noise_corrected_multi_rsquared_loss']
-            print('step: ' + str(step) + ", layer: " + layer + ", calculated_value: " + str(calculated_regression_val))
+            print("layer: " + layer + ", calculated_value: " + str(calculated_regression_val))
         except:
             print 'Oh no...' + k + ' did not regress'
             pass
         ### END OF YOUR CODE
         
-def plot_conv1_kernels(data, step):
+def plot_conv1_kernels(data):
     """
     Plots the 96 conv1 kernels in a 12 x 8 subplot grid.
     
     You will need to EDIT this function.
     """
-    print('Iteration step: %d' % step)
     kernels = np.array(data['conv1_kernel'])
-    ### YOUR CODE HERE
-    x = 12
-    y = 8
+    x = 5
+    y = 6
     f, axarr = plt.subplots(x, y, figsize=(4*x, 4*y))
     for i in range(x):
         for j in range(y):
