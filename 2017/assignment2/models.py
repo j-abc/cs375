@@ -152,7 +152,6 @@ def vae_model(inputs, train=True, norm=True, **kwargs):
             name=layer_name,
             layer = layer_name,
             batch_norm = encoding_bns[i],
-            dropout = dropout,
             )
         current_layer = outputs[layer_name]
     # z, and sigma_z
@@ -203,7 +202,6 @@ def vae_model(inputs, train=True, norm=True, **kwargs):
             layer = layer_name,
             batch_norm = decoding_bns[i],
             deconv = True,
-            dropout = dropout,
             )
         current_layer = outputs[layer_name]
     # y
