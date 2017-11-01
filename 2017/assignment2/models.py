@@ -181,7 +181,7 @@ def vae_model(inputs, train=True, norm=True, **kwargs):
     # decoding layers
     ## start by the last encoding layer outshape
     out_shp = outputs[encoding_layernames[-1]].get_shape().as_list()
-    dec0 = fc(current_layer, shp[1]*shp[2]*shp[3],
+    dec0 = fc(current_layer, out_shp[1]*out_shp[2]*out_shp[3],
         weight_decay=weight_decay,
         activation=None,
         batch_norm=False,
