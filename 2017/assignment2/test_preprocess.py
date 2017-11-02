@@ -1,5 +1,5 @@
 import numpy as np 
-from color_utils import preprocess
+from color_utils import preprocess, decode
 from skimage import data
 
 a = data.astronaut()
@@ -10,4 +10,10 @@ D[1,:,:,:] = a
 
 data_l, gt_ab_313, prior_boost_nongray = preprocess(D)
 
-print np.nan_to_num(gt_ab_313)[0,:,:,:]
+def testy_func(x):
+	print x
+
+print np.stack([x for x in D]).shape
+
+Dp = decode(data_l, gt_ab_313)
+
