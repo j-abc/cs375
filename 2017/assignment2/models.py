@@ -172,18 +172,20 @@ def colorful_model(inputs, train=True, norm=True, **kwargs):
         current_layer = outputs[layer_names[i]]
         print current_layer.get_shape().as_list(), strides
 
-    outputs['pred'], outputs['pred' + '_kernel'] = conv(
+    outputs['conv8_313'], outputs['conv8_313' + '_kernel'] = conv(
             current_layer,
             313,
             ksize=1,
             strides=1,
             padding='SAME',
             weight_decay=weight_decay,
-            name='pred',
-            layer = 'pred',
+            name='conv8_313',
+            layer = 'conv8_313',
             deconv = False,
             activation = None,
             )
+
+    outputs['pred'] = tf.py_func(decode, [data_l, outputs['conv8_313']], [tf.float32,tf.float32,tf.float32])
 
     return outputs, {}
 
