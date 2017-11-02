@@ -81,7 +81,7 @@ class Experiment():
                     'group': 'val',
                     'crop_size': self.Config.crop_size,
                     # TFRecords (super class) data provider arguments
-                    'file_pattern': 'test*.tfrecords',
+                    'file_pattern': self.Config.file_pattern,
                     'batch_size': self.Config.batch_size,
                     'shuffle': False,
                     'shuffle_seed': self.Config.seed,
@@ -241,6 +241,7 @@ class cifar10(Experiment):
         crop_size = 24
         thres_loss = 1000000000000000
         n_epochs = 60
+        file_pattern = 'test*.tfrecords'
         
         # calculated
         train_steps = fnDataProvider.N_TRAIN / batch_size * n_epochs
@@ -263,6 +264,7 @@ class imagenet(Experiment):
         crop_size = 224
         thres_loss = 1000000000000000 # dafuq does this mean?
         n_epochs = 90
+        file_pattern = 'validation*.tfrecords'
         
         # calculated
         train_steps = fnDataProvider.N_TRAIN / batch_size * n_epochs
