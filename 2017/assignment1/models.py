@@ -28,7 +28,7 @@ def tiny_model(inputs, train = True, norm = True, **kwargs):
     # propagate input targets
     outputs = inputs
     dropout = .5 if train else None
-    input_to_network = inputs['images']
+    input_to_network = tf.map_fn(lambda frame: tf.image.per_image_standardization(frame), inputs['images'])
 
     ### YOUR CODE HERE
 
