@@ -2,7 +2,7 @@
     "model_name"   : "vae_model",
     "data_name"    : "imagenet",
     "loss_name"    : "vae_loss",
-    "exp_id"       : "experiment2.2",
+    "exp_id"       : "experiment2_2",
     "run_now"      : "True",
     "devices"      : ["/gpu:1"]
 }
