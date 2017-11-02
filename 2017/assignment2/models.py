@@ -221,6 +221,22 @@ def hourglass(inputs, train = True, norm = True, **kwargs):
     # layer i has same shape as layer n-i
     # should we put sparseness on the hourglass? 
     
+    # how do we even -do- the hourglass
+    
+    # define an hourglass calculator
+    
+    # that will tell us the size of things and backwards
+    
+    # okay.. here's what we're going to do...
+    
+    # forward pass...
+    
+    # conv forward
+    # ksize, strides, padding, activation
+    # [64   , 6      , 'SAME',  'relu]
+    
+    
+    
     # now... we gon make a DEEP bottle. 
     return outputs, {}
 def shallow_bottle(inputs, train = True, norm = True, **kwargs):
@@ -289,14 +305,10 @@ def pooled_shallow(inputs, train = True, norm = True, **kwargs):
 
 
 def model_bottle(inputs, n_filters, filter_sizes, corruption = False):
-    # build our autoencoder
-    
-    # build our encoder
-        # 
-    
-    # build our decoder
     
     return outputs, {}
 
 def our_bottle(inputs, train = True, norm = True, **kwargs):
     return outputs, {}
+
+# what to do and how to do this stuff
