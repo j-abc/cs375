@@ -1,4 +1,4 @@
-# shamelessly taken from https://github.com/nilboy/colorization-tf
+:# shamelessly taken from https://github.com/nilboy/colorization-tf
 from skimage import color
 from skimage.transform import resize
 from skimage.io import imread
@@ -279,8 +279,8 @@ def decode(data_l, conv8_313, rebalance=1):
   """
   data_l = data_l + 50
   _, height, width, _ = data_l.shape
-  data_l = data_l[0, :, :, :]
-  conv8_313 = conv8_313[0, :, :, :]
+  #data_l = data_l[0, :, :, :]
+  #conv8_313 = conv8_313[0, :, :, :]
   enc_dir = ''
   conv8_313_rh = conv8_313 * rebalance
   class8_313_rh = softmax(conv8_313_rh)
@@ -289,6 +289,7 @@ def decode(data_l, conv8_313, rebalance=1):
   
   data_ab = np.dot(class8_313_rh, cc)
   data_ab = resize(data_ab, (height, width))
+  data_ab = np.apply_along_axis(lambda x: resize(x, (height, width)), 0, data_ab)
   img_lab = np.concatenate((data_l, data_ab), axis=-1)
   img_rgb = color.lab2rgb(img_lab)
 
