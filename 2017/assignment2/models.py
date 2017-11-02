@@ -31,7 +31,7 @@ def vae_model(inputs, train=True, norm=True, **kwargs):
     decoding_channels = [64, 32, in_shp[-1]]
     decoding_bns = [True, False, True]
 
-    zdim = 10
+    zdim = 30
     weight_decay = 1e-3
     dropout = .5 if train else None
     # encoding layers
