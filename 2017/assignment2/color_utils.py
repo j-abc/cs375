@@ -252,7 +252,6 @@ def preprocess(data):
   #NNEncoder
   #gt_ab_313: [N, H/4, W/4, 313]
   gt_ab_313 = _nnencode(data_ab_ss)
-  print data_ab_ss.shape, gt_ab_313.shape
   #Prior_Boost 
   #prior_boost: [N, 1, H/4, W/4]
   prior_boost = _prior_boost(gt_ab_313)
@@ -288,12 +287,11 @@ def decode(data_l, conv8_313, rebalance=1):
   cc = np.load(os.path.join(enc_dir, 'pts_in_hull.npy'))
   
   data_ab = np.dot(class8_313_rh, cc)
-  data_ab = resize(data_ab, (height, width))
-  data_ab = np.apply_along_axis(lambda x: resize(x, (height, width)), 0, data_ab)
+  data_ab = np.stack([resize(img, (height, width)) for img in data_ab])
   img_lab = np.concatenate((data_l, data_ab), axis=-1)
-  img_rgb = color.lab2rgb(img_lab).astype( dtype = np.float32 )
+  img_rgb =  np.stack(color.lab2rgb(img) for img in img_lab)
 
-  return img_rgb
+  return img_rgb.astype( dtype = np.float32 )
 
 def get_data_l(image_path):
   """
