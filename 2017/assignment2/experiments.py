@@ -155,7 +155,7 @@ class Experiment():
             'dbname': self.model.dbname,
             'collname': self.model.collname,
             'exp_id': self.exp_id,
-            'save_valid_freq': 500,
+            'save_valid_freq': 50,
             'save_filters_freq': 200,
             'cache_filters_freq': 200,
             'save_metrics_freq': 200,
