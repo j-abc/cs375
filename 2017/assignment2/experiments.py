@@ -270,8 +270,8 @@ class cifar10(Experiment):
 
         learning_rate_params = {
             'func': piecewise_constant_wrapper,
-            'boundaries': list(np.array([200000, 375000]).astype(np.int64)),
-            'values': [3e-5, 1e-5, 3e-6]            
+            'boundaries': list(np.array([2000, 5000, 8000]).astype(np.int64)),
+            'values': [0.001, 3e-5, 1e-5, 3e-6]            
         }
         
         # calculated
