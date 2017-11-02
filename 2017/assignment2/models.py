@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import tensorflow as tf
-from color_utils import preprocess
+from color_utils import preprocess, decode
 from losses import *
 
 '''
@@ -185,7 +185,7 @@ def colorful_model(inputs, train=True, norm=True, **kwargs):
             activation = None,
             )
 
-    outputs['pred'] = tf.py_func(decode, [data_l, outputs['conv8_313']], [tf.float32,tf.float32,tf.float32])
+    outputs['pred'] = tf.py_func(decode, [data_l, outputs['conv8_313']], [tf.float32])
 
     return outputs, {}
 

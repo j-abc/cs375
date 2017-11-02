@@ -291,7 +291,7 @@ def decode(data_l, conv8_313, rebalance=1):
   data_ab = resize(data_ab, (height, width))
   data_ab = np.apply_along_axis(lambda x: resize(x, (height, width)), 0, data_ab)
   img_lab = np.concatenate((data_l, data_ab), axis=-1)
-  img_rgb = color.lab2rgb(img_lab)
+  img_rgb = color.lab2rgb(img_lab).astype( dtype = np.float32 )
 
   return img_rgb
 
