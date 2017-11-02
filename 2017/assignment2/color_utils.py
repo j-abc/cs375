@@ -1,4 +1,4 @@
-:# shamelessly taken from https://github.com/nilboy/colorization-tf
+# shamelessly taken from https://github.com/nilboy/colorization-tf
 from skimage import color
 from skimage.transform import resize
 from skimage.io import imread
