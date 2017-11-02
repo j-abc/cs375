@@ -36,7 +36,7 @@ def vae_model(inputs, train=True, norm=True, **kwargs):
     dropout = .5 if train else None
     # encoding layers
     current_layer = outputs['images']
-    print current_layer.get_shape().as_list()
+    #print current_layer.get_shape().as_list()
     for i,layer_name in enumerate(encoding_layernames):
         outputs[layer_name], outputs[layer_name + '_kernel'] = conv(
             current_layer,
@@ -50,7 +50,7 @@ def vae_model(inputs, train=True, norm=True, **kwargs):
             batch_norm = encoding_bns[i],
             )
         current_layer = outputs[layer_name]
-        print current_layer.get_shape().as_list()
+        #print current_layer.get_shape().as_list()
     # z, and sigma_z
     outputs['z_mean'] = fc(current_layer,
         zdim,
@@ -75,7 +75,7 @@ def vae_model(inputs, train=True, norm=True, **kwargs):
     noise = tf.random_normal([1, zdim])
     outputs['latent_encoding'] = tf.add(outputs['z_mean'], tf.multiply(noise, tf.exp(.5*outputs['z_logstd'])), name='latent_encoding')
     current_layer = outputs['latent_encoding']
-    print current_layer.get_shape().as_list()
+    #print current_layer.get_shape().as_list()
     # decoding layers
     ## start by the last encoding layer outshape
     out_shp = outputs[encoding_layernames[-1]].get_shape().as_list()
@@ -102,10 +102,10 @@ def vae_model(inputs, train=True, norm=True, **kwargs):
             deconv = True,
             )
         current_layer = outputs[layer_name]
-        print current_layer.get_shape().as_list()
+        #print current_layer.get_shape().as_list()
     # y
     outputs['pred'] = tf.nn.sigmoid(current_layer)
-    print outputs['pred'].get_shape().as_list()
+    #print outputs['pred'].get_shape().as_list()
     return outputs, {}
 
 def colorful_model(inputs, train=True, norm=True, **kwargs):
