@@ -291,9 +291,9 @@ def decode(data_l, conv8_313, rebalance=1):
   data_ab = resize(data_ab, (height, width))
   data_ab = np.apply_along_axis(lambda x: resize(x, (height, width)), 0, data_ab)
   img_lab = np.concatenate((data_l, data_ab), axis=-1)
-  img_rgb = color.lab2rgb(img_lab).astype( dtype = np.float32 )
+  img_rgb =  np.apply_along_axis(lambda x: color.lab2rgb(x)), 0, img_lab)
 
-  return img_rgb
+  return img_rgb.astype( dtype = np.float32 )
 
 def get_data_l(image_path):
   """
