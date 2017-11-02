@@ -176,7 +176,10 @@ class Experiment():
             'load_query': None,            
         }
         return params
-    
+    '''
+    def agg_mean(self, x):
+        return {k: np.mean(v) for k, v in x.items()}
+    '''
     def online_agg_mean(self, agg_res, res, step):
         """
         Appends the mean value for each key
@@ -195,12 +198,9 @@ class Experiment():
         for k in results:
             if k in ['pred', 'gt']:
                 results[k] = results[k][0]
-            elif k is 'l2_loss':
-                results[k] = np.mean(results[k])
             else:
-                raise KeyError('Unknown target')
+                results[k] = np.mean(results[k])
         return results
-
 
     def in_top_k(self, inputs, outputs):
         """
@@ -244,6 +244,17 @@ class Experiment():
         for target in targets:
             retval[target] = outputs[target]
         return retval
+    '''
+    def online_agg_mean(self, agg_res, res, step):
+        """
+        Appends the mean value for each key
+        """
+        if agg_res is None:
+            agg_res = {k: [] for k in res}
+        for k, v in res.items():
+            agg_res[k].append(np.mean(v))
+        return agg_res    
+    '''
 
 class cifar10(Experiment):
     class Config():
