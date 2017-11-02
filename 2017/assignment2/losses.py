@@ -33,3 +33,11 @@ def autoencoder_loss(inputs, outputs):
     x_tensor = outputs['x_tensor']
     y = outputs['y']
     return tf.reduce_sum(tf.square(y - x_tensor))
+
+
+
+
+def val_loss_wrapper(inputs, outputs, loss_fn):
+    return {'l2_loss':loss_fn(inputs,outputs),
+            'pred':outputs['pred'][::4], # change names later...
+            'gt':inputs['images'][::4]}  # change names later...

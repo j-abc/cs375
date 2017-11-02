@@ -2,7 +2,7 @@
     "model_name"   : "vae_model",
     "data_name"    : "cifar10",
     "loss_name"    : "vae_loss",
-    "exp_id"       : "experiment2_5",
+    "exp_id"       : "experiment12",
     "run_now"      : "True",
     "devices"      : ["/gpu:1"]
 }

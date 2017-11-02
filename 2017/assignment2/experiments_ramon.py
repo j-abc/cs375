@@ -3,7 +3,9 @@ import numpy as np
 import tensorflow as tf
 from tfutils import base, data, model, optimizer, utils
 from dataprovider import CIFAR10DataProvider, ImageNetDataProvider
-from losses import *
+
+def piecewise_constant_wrapper(global_step, boundaries, values):
+    return tf.train.piecewise_constant(global_step, boundaries, values) 
 
 class Experiment():
     def __init__(self, model, exp_id):
@@ -81,32 +83,27 @@ class Experiment():
                     'group': 'val',
                     'crop_size': self.Config.crop_size,
                     # TFRecords (super class) data provider arguments
-                    'file_pattern': 'test*.tfrecords',
+                    'file_pattern': self.Config.file_pattern,
                     'batch_size': self.Config.batch_size,
                     'shuffle': False,
                     'shuffle_seed': self.Config.seed,
-                    'file_grab_func': self.subselect_tfrecords,
                     'n_threads': 4,
                 },
-                'targets': {
-                    'func': lambda i, o : val_loss_wrapper(i, o, self.model.loss_fn),
+                'queue_params': {
+                    'queue_type': 'fifo',
+                    'batch_size': self.Config.batch_size,
+                    'seed': self.Config.seed,
+                    'capacity': self.Config.batch_size * 10,
+                    'min_after_dequeue': self.Config.batch_size * 5,
                 },
-                'num_steps': self.Config.val_steps,                
-                'agg_func': self.agg_mean, 
-                'online_agg_func': self.online_agg_mean,    
+                'targets': {
+                    'func': self.custom_loss,
+                },
+                'agg_func': self.agg_mean,
+                'num_steps': self.Config.val_steps,
+                'online_agg_func': self.online_agg_mean,
             }
         }
-        '''
-        'targets': {
-            'func': self.model.loss_fn,
-            'target': ['labels'],
-            'loss_per_case_func_params' : {'_outputs': 'outputs', 
-                '_targets_$all': 'inputs'
-            },
-            'agg_func': tf.reduce_mean,
-        },
-        '''
-
         """
         model_params defines the model i.e. the architecture that 
         takes the output of the data provider as input and outputs 
@@ -121,7 +118,7 @@ class Experiment():
         loss_params defines your training loss.
         """
         params['loss_params'] = {
-            'targets': ['images'],
+            'targets': ['labels'],
             'agg_func': tf.reduce_mean,
             'loss_per_case_func': self.model.loss_fn,
             'loss_per_case_func_params' : {'_outputs': 'outputs', 
@@ -131,18 +128,8 @@ class Experiment():
 
         """
         learning_rate_params defines the learning rate, decay and learning function.
-        """
-        def piecewise_constant_wrapper(global_step, boundaries, values):
-            return tf.train.piecewise_constant(global_step, boundaries, values)  
-
-        # this params taken from the tutorial
-        params['learning_rate_params'] = {
-            'learning_rate': 5e-3,
-            'decay_steps': 2000,
-            'decay_rate': 0.95,
-            'staircase': True,
-        }
-
+        """ 
+        params['learning_rate_params'] = self.Config.learning_rate_params
 
         """
         optimizer_params defines the optimizer.
@@ -151,6 +138,7 @@ class Experiment():
             'func': optimizer.ClipOptimizer,
             'optimizer_class': tf.train.AdamOptimizer,
             'clip': False,
+            #'momentum': .9,            
         }
 
         """
@@ -163,12 +151,12 @@ class Experiment():
             'dbname': self.model.dbname,
             'collname': self.model.collname,
             'exp_id': self.exp_id,
-            'save_valid_freq': 50, # 10000, in as1
-            'save_filters_freq': 200, # 30000, in as1
-            'cache_filters_freq': 200, # 50000, in as1
-            'save_metrics_freq': 200,            
+            'save_valid_freq': 50,
+            'save_filters_freq': 200,
+            'cache_filters_freq': 200,
+            'save_metrics_freq': 200,
             'save_initial_filters' : False,
-            'save_to_gfs': [],            
+            'save_to_gfs':['pred', 'gt'],            
         }
 
         """
@@ -184,7 +172,10 @@ class Experiment():
             'load_query': None,            
         }
         return params
-    
+    '''
+    def agg_mean(self, x):
+        return {k: np.mean(v) for k, v in x.items()}
+    '''
     def online_agg_mean(self, agg_res, res, step):
         """
         Appends the mean value for each key
@@ -198,17 +189,37 @@ class Experiment():
                 value = np.mean(v)
             agg_res[k].append(value)
         return agg_res
-    
+
     def agg_mean(self, results):
         for k in results:
             if k in ['pred', 'gt']:
                 results[k] = results[k][0]
-            elif k is 'l2_loss':
-                results[k] = np.mean(results[k])
             else:
-                raise KeyError('Unknown target')
+                results[k] = np.mean(results[k])
         return results
 
+    def in_top_k(self, inputs, outputs):
+        """
+        Implements top_k loss for validation
+
+        You will need to EDIT this part. Implement the top1 and top5 functions
+        in the respective dictionary entry.
+        """
+        return {'top1': tf.nn.in_top_k(outputs['pred'], inputs['labels'], 1),
+                'top5': tf.nn.in_top_k(outputs['pred'], inputs['labels'], 5)}
+
+    def custom_loss(self, inputs, outputs):
+        """
+        Implements the same loss for validation as for training
+
+        You will need to EDIT this part. Implement the top1 and top5 functions
+        in the respective dictionary entry.
+        """
+        return {
+            'custom_loss':tf.zeros([1,1],dtype=tf.float32, name = None),# self.model.loss_fn(inputs,outputs),
+            'pred':tf.zeros([1,1], dtype = tf.float32, name = None),#outputs['pred'],
+            'gt':tf.zeros([1,1], dtype = tf.float32, name = None),#inputs['images'],
+        }
 
     def subselect_tfrecords(self, path):
         """
@@ -229,7 +240,17 @@ class Experiment():
         for target in targets:
             retval[target] = outputs[target]
         return retval
-
+    '''
+    def online_agg_mean(self, agg_res, res, step):
+        """
+        Appends the mean value for each key
+        """
+        if agg_res is None:
+            agg_res = {k: [] for k in res}
+        for k, v in res.items():
+            agg_res[k].append(np.mean(v))
+        return agg_res    
+    '''
 
 class cifar10(Experiment):
     class Config():
@@ -241,6 +262,13 @@ class cifar10(Experiment):
         crop_size = 24
         thres_loss = 1000000000000000
         n_epochs = 60
+        file_pattern = 'test*.tfrecords'
+
+        learning_rate_params = {
+            'func': piecewise_constant_wrapper,
+            'boundaries': list(np.array([2000, 5000, 8000]).astype(np.int64)),
+            'values': [0.001, 3e-5, 1e-5, 3e-6]            
+        }
         
         # calculated
         train_steps = fnDataProvider.N_TRAIN / batch_size * n_epochs
@@ -263,6 +291,13 @@ class imagenet(Experiment):
         crop_size = 224
         thres_loss = 1000000000000000 # dafuq does this mean?
         n_epochs = 90
+        file_pattern = 'validation*.tfrecords'
+
+        learning_rate_params = {
+            'func': piecewise_constant_wrapper,
+            'boundaries': list(np.array([200000, 375000]).astype(np.int64)),
+            'values': [3e-5, 1e-5, 3e-6]            
+        }
         
         # calculated
         train_steps = fnDataProvider.N_TRAIN / batch_size * n_epochs
