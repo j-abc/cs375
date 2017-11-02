@@ -160,7 +160,7 @@ class Experiment():
             'cache_filters_freq': 200,
             'save_metrics_freq': 200,
             'save_initial_filters' : False,
-            'save_to_gfs': [],            
+            'save_to_gfs': ['pred', 'gt'],            
         }
 
         """
