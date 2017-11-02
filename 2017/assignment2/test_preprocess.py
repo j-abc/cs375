@@ -15,3 +15,4 @@ print np.stack([x for x in D]).shape
 
 Dp = decode(data_l, gt_ab_313)
 
+print Dp.shape
