@@ -223,7 +223,7 @@ def preprocess(data):
     gt_ab_313: ab discrete channel batch (N * H/4 * W/4 * 313)
     prior_boost_nongray: (N * H/4 * W/4 * 1) 
   '''
-  data = data.astype(np.uint8)
+  data = (data * 255).astype(np.uint8)
   warnings.filterwarnings("ignore")
   N = data.shape[0]
   H = data.shape[1]
