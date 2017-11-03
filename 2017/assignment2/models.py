@@ -124,7 +124,7 @@ def colorful_model(inputs, train=True, norm=True, **kwargs):
     outputs['gt_ab_313'] = gt_ab_313
     dropout = .5 if train else None
     input_to_network = data_l
-    weight_decay = 1e-3
+    weight_decay = 1e-2
     # setup
     layer_names = ['conv1_1','conv1_2','conv2_1',
     'conv2_2','conv3_1','conv3_2','conv3_3','conv4_1',
