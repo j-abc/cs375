@@ -41,5 +41,5 @@ def val_loss_wrapper(inputs, outputs, loss_fn):
     return {'l2_loss':loss_fn(inputs,outputs),
             'pred':outputs['pred'][::4], # change names later...
             'gt':inputs['images'][::4],
-            'gt':outputs['reconstruct'][::4],
+            'reconstruct':outputs['reconstruct'][::4],
             }  # change names later...}
