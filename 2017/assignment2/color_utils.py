@@ -98,10 +98,8 @@ class NNEncode():
             self.alreadyUsed = True
             self.pts_enc_flt = np.zeros((P,self.K))
             self.p_inds = np.arange(0,P,dtype='int')[:,na()]
-
         P = pts_flt.shape[0]
         (dists,inds) = self.nbrs.kneighbors(pts_flt)
-
         wts = np.exp(-dists**2/(2*self.sigma**2))
         wts = wts/np.sum(wts,axis=1)[:,na()]
 
@@ -138,7 +136,6 @@ def _nnencode(data_ab_ss):
   data_ab_ss = np.transpose(data_ab_ss, (0, 3, 1, 2))
   nnenc = NNEncode(NN, sigma, km_filepath=os.path.join(enc_dir, 'pts_in_hull.npy'))
   gt_ab_313 = nnenc.encode_points_mtx_nd(data_ab_ss, axis=1)
-
   gt_ab_313 = np.transpose(gt_ab_313, (0, 2, 3, 1))
   return gt_ab_313
 
@@ -226,6 +223,7 @@ def preprocess(data):
     gt_ab_313: ab discrete channel batch (N * H/4 * W/4 * 313)
     prior_boost_nongray: (N * H/4 * W/4 * 1) 
   '''
+  data = data.astype(np.uint8)
   warnings.filterwarnings("ignore")
   N = data.shape[0]
   H = data.shape[1]
@@ -245,6 +243,7 @@ def preprocess(data):
   #subsample 1/4  (N * H/4 * W/4 * 2)
   data_ab_ss = data_ab[:, ::4, ::4, :]
 
+
   #NonGrayMask {N, 1, 1, 1}
   thresh = 5
   nongray_mask = (np.sum(np.sum(np.sum(np.abs(data_ab_ss) > thresh, axis=1), axis=1), axis=1) > 0)[:, np.newaxis, np.newaxis, np.newaxis]
@@ -262,9 +261,9 @@ def preprocess(data):
 
   return data_l.astype(np.float32), gt_ab_313.astype(np.float32), prior_boost_nongray.astype(np.float32)
 
-def softmax(x):
+def softmax(x, temperature = 0.38):
     """Compute softmax values for each sets of scores in x."""
-    e_x = np.exp(x - np.expand_dims(np.max(x, axis=-1), axis=-1))
+    e_x = np.exp((x - np.expand_dims(np.max(x, axis=-1), axis=-1)) / temperature )
     return e_x / np.expand_dims(e_x.sum(axis=-1), axis=-1) # only difference
 
 
@@ -285,8 +284,9 @@ def decode(data_l, conv8_313, rebalance=1):
   class8_313_rh = softmax(conv8_313_rh)
 
   cc = np.load(os.path.join(enc_dir, 'pts_in_hull.npy'))
-  
+  #print cc
   data_ab = np.dot(class8_313_rh, cc)
+  #print data_ab
   data_ab = np.stack([resize(img, (height, width)) for img in data_ab])
   img_lab = np.concatenate((data_l, data_ab), axis=-1)
   img_rgb =  np.stack(color.lab2rgb(img) for img in img_lab)
