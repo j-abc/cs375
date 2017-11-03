@@ -192,7 +192,7 @@ class Experiment():
         if agg_res is None:
             agg_res = {k: [] for k in res}
         for k, v in res.items():
-            if k in ['pred', 'gt']:
+            if k in ['pred', 'gt','out']:
                 value = v
             else:
                 value = np.mean(v)
@@ -201,7 +201,7 @@ class Experiment():
     
     def agg_mean(self, results):
         for k in results:
-            if k in ['pred', 'gt']:
+            if k in ['pred', 'gt','out']:
                 results[k] = results[k][0]
             elif k is 'l2_loss':
                 results[k] = np.mean(results[k])
