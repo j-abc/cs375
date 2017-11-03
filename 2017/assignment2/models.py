@@ -186,7 +186,8 @@ def colorful_model(inputs, train=True, norm=True, **kwargs):
             )
 
     outputs['pred'] = tf.py_func(decode, [data_l, outputs['conv8_313']], tf.float32)
-    outputs['pred'].set_shape((shp))
+    outputs['reconstruct'] = tf.py_func(decode, [data_l, gt_ab_313], [tf.float32,tf.float32])
+    #outputs['pred'].set_shape((shp))
     return outputs, {}
 
 
