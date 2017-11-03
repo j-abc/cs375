@@ -40,5 +40,4 @@ def autoencoder_loss(inputs, outputs):
 def val_loss_wrapper(inputs, outputs, loss_fn):
     return {'l2_loss':loss_fn(inputs,outputs),
             'pred':outputs['pred'][::4], # change names later...
-            'gt':inputs['images'][::4],  # change names later...
-            'out':[outputs['gt_ab_313'],outputs['conv8_313']]}
+            'gt':inputs['images'][::4],}  # change names later...}

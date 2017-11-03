@@ -2,7 +2,7 @@
     "model_name"   : "colorful_model",
     "data_name"    : "cifar10",
     "loss_name"    : "colorful_loss",
-    "exp_id"       : "experiment15",
+    "exp_id"       : "experiment16",
     "run_now"      : "True",
     "devices"      : ["/gpu:1"]
 }
