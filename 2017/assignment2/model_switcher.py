@@ -1,6 +1,4 @@
 import matplotlib
-matplotlib.use('Agg') # dunno if this is necessary. it helped with a rand error message in jup though.
-
 import models
 import losses
 import experiments
@@ -23,7 +21,8 @@ class model_switcher:
         my_model = model_switcher(model_name = 'layers', data_name = 'cifar10')
         # now we can access dbname, collname, and layers from my_model
     '''
-    def __init__(self, model_name = 'herpaderp', data_name = 'cifar10', loss_name = 'default', exp_id = 'yesyes', devices = None):
+    
+    def __init__(self, model_name = 'herpaderp', data_name = 'cifar10', loss_name = 'default', exp_id = '', test_prefix = ''):
         '''
         sets up parameters/def associated with a given model and dataset
         '''
@@ -32,6 +31,7 @@ class model_switcher:
         self.model_name = model_name
         self.loss_name  = loss_name
         self.exp_id     = exp_id
+        self.test_id    = test_prefix + exp_id
         
         # variables that we feed into train and test.py
         self.dbname     = data_name
@@ -48,13 +48,13 @@ class model_switcher:
         layer_dict = {
             'herpaderp':['test', 'test','test'],
             'tiny_model': ['blah'],
-            'colorful_model':['conv1_1','conv1_2','conv2_1',
-            'conv2_2','conv3_1','conv3_2','conv3_3','conv4_1',
-            'conv4_2','conv4_3','conv5_1','conv5_2','conv5_3',
-            'conv6_1','conv6_2','conv6_3','conv7_1','conv7_2',
-            'conv7_3','conv8_1','conv8_2','conv8_3','pred'],
-            'vae_model':['enc' + str(i) for i in range(1,4)] \
-             + ['dec' + str(i) for i in range(1,4)] + ['z_mean', 'z_logstd', 'dec0'],
+            'colorful_model':[
+                'conv4_3','conv8_3'
+            ],
+            'VAE':['oh', 'geez', 'why'],
+            'shallow_bottle':['conv1','deconv1'],
+            'pooled_shallow':['conv1','pool1','deconv1'],
+            'bottle_model': ['conv' + str(i) for i in range(1,3+1)] + ['deconv'+ str(i) for i in range(1, 3+1)]
         }
         if model_name not in layer_dict.keys():
             raise Exception('Model layer names not specified')
@@ -89,17 +89,21 @@ class model_switcher:
         default_dict = {
             'autoencoder':'autoencoder_loss',
             'VAE':'vae_loss',
-            'colorful_model': 'colorful_loss'
+            'colorful_model': 'colorful_loss',
+            'shallow_bottle':'autoencoder_loss',
+            'pooled_shallow':'autoencoder_loss',
+            'bottle_model':'autoencoder_loss'
         }
         if loss_name == 'default':
             loss_name = default_dict[model_name]
-        
-        # check if l
+
         if hasattr(losses, loss_name):
             return getattr(losses, loss_name)
         else:
             raise Exception('Loss name not found in losses.py')
-            
+
+# may make this a dictionary of dictionaries
+
 # what do we switch here...
 # shallow bottleneck convolutional autoencoder:
     # loss: L2 reconsturciton distance between original image nad predicted output
@@ -116,3 +120,4 @@ class model_switcher:
     # from a pool of losses
 # so... hold losses in model_switcher.py
     # we can have default losses but also switch the losses if desired
+
