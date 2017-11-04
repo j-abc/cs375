@@ -12,7 +12,7 @@ def roundup(x, nearest=10000.):
     return int(math.ceil(x / nearest)) * int(nearest)
 
 
-def get_relevant_steps(modelname, quantiles, my_model, num_steps = 5):
+def get_relevant_steps(modelname, quantiles, my_model, num_steps = 10):
     # get connection
     port = 24444
     host = 'localhost'
@@ -21,8 +21,8 @@ def get_relevant_steps(modelname, quantiles, my_model, num_steps = 5):
     coll = connection[my_model.data_name][modelname]
     
     
-    print("Data name" + data_name)
-    print("Model name " + modelname)
+    print("Data name" + my_model.data_name)
+    print("Model name " + my_model.model_name)
     print(coll.distinct('exp_id'))
     # obtain max steps
     query = {
@@ -44,7 +44,7 @@ def get_relevant_steps(modelname, quantiles, my_model, num_steps = 5):
     
     #steps = [step_query[step_query.count()-2]['step']]
     #steps = [step_query[i]['step'] for i in range(1)]
-    my_range = np.linspace(0, step_query.count()-1, num_steps).tolist()
+    my_range = np.linspace(1, step_query.count()-1, num_steps).tolist()
     my_range = set([int(round(i)) for i in my_range])
     steps = [step_query[i]['step'] for i in my_range]
     #steps = [step_query[step_query.count()-1]['step']]
@@ -52,22 +52,11 @@ def get_relevant_steps(modelname, quantiles, my_model, num_steps = 5):
     #step_qs = [steps[i] for i in indices]
     for i in range(20):
         print steps
-        
+    steps = np.linspace(1000, 10000, 10).astype(int).tolist()
     return steps
 
-if __name__ == '__main__':
-    '''
-    this thing gon run it all
-    '''
-    if len(sys.argv) < 5:
-        raise Exception("Not enough arguments! Requires: model_name, data_name, loss_name, and exp_id.")
-    # extract inputs
-    model_name   = sys.argv[1]  #'shallow_bottle'
-    data_name    = sys.argv[2]  #'cifar10'
-    loss_name    = sys.argv[3]  #'default'
-    exp_id       = sys.argv[4]  #'testrun'
-    run_now      = 'True'
-    
+def run_this(model_name, data_name, loss_name, exp_id):
+    run_now = 'True'
     if run_now == 'True':
         run_now = True
     else:
@@ -97,3 +86,24 @@ if __name__ == '__main__':
             print("LOAD PARAMS: ")
             print(params['load_params'])
             base.test_from_params(**params)
+    
+if __name__ == '__main__':
+    '''
+    this thing gon run it all
+    '''
+    '''
+    if len(sys.argv) < 5:
+        raise Exception("Not enough arguments! Requires: model_name, data_name, loss_name, and exp_id.")
+    # extract inputs
+    model_name   = sys.argv[1]  #'shallow_bottle'
+    data_name    = sys.argv[2]  #'cifar10'
+    loss_name    = sys.argv[3]  #'default'
+    exp_id       = sys.argv[4]  #'testrun'
+    run_now      = 'True'
+    '''
+
+    import pandas as pd
+    model_df = pd.read_csv('models.csv',delimiter = ' ')
+    
+    for idx, irow in model_df.iterrows():
+        run_this(irow['model_name'], irow['data_name'], irow['loss_name'], irow['exp_id']) 

@@ -245,4 +245,26 @@ def plot_images(data, step, x = 8, y = 2):
     f.subplots_adjust(wspace=0)
     f.show()
 
+def linear_classification(data):
+    
+    # Must set actual autoencoders
+    autoencoders = [[1,20,30,65], [3,50,70,80], [2,7,65,70], [2,30,60,70], [1,62,64,68], [1,33,44,66], 
+                 [3,50,60,70], [9,60,75,86], [4,5,6,7]]
+    autoencoder_legend = ['shallow_bottleneck_cifar10', 'pooled_bottleneck_cifar10', 
+                          'sparse_shallow_bottleneck_cifar10', 'sparce_pooled_cifar10',
+                        'deem_symmetric_cifar10', 'vae_cifar10', 'colorful_cifar10', 
+                          'shallow_bottleneck_imagenet', 'colorful_imagenet']
+    x = range(0, len(autoencoders[0]))
+
+    for autoencoder in autoencoders:
+        plt.plot(x, autoencoder)
+        #plt.plot(len(autoencoder), autoencoder)
+
+    plt.xlabel('Layer')
+    plt.ylabel('Top-1 Class Accuracy (%)')
+    plt.title("Linear Classification")
+    plt.ylim([0,100])
+    plt.legend(autoencoder_legend, loc='best')
+
+    plt.show()
 ### END OF YOUR CODE

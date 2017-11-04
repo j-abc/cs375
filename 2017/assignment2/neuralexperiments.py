@@ -58,7 +58,7 @@ class NeuralDataExperiment():
         self.Config.model_name  = self.model.collname 
         self.Config.image_set = image_set # variation in the something....
         self.Config.extraction_targets = [attr[0] for attr in NeuralDataProvider.ATTRIBUTES] \
-            + self.model.layers# + ['conv1_kernel']
+            + self.model.layers + ['conv1_kernel']
         
     """
     Defines the neural data testing experiment
@@ -152,7 +152,6 @@ class NeuralDataExperiment():
                     'targets': self.Config.extraction_targets,
                 },
                 'num_steps': self.Config.val_steps, #CHANGED HERE
-                #'num_steps': 1,
                 'agg_func': self.neural_analysis,
                 'online_agg_func': self.online_agg,
             }
@@ -185,7 +184,7 @@ class NeuralDataExperiment():
             'port': 24444,
             'dbname': self.model.dbname,
             'collname': self.model.collname,
-            'exp_id': self.Config.exp_id + '_help',
+            'exp_id': self.Config.exp_id + '_test',
             'save_to_gfs': self.Config.gfs_targets,
         }
 #self.Config.test_id,
@@ -207,7 +206,7 @@ class NeuralDataExperiment():
             'collname': self.model.collname, #self.Config.model_name,
             'exp_id': self.Config.exp_id, #self.Config.test_id
             'do_restore': True,
-            'query': {'step': 1000} \
+            'query': {'step': self.Config.extraction_step} \
                 if self.Config.extraction_step is not None else None,
         }
 
@@ -449,11 +448,15 @@ class NeuralDataExperiment():
         You will need to EDIT this function to fully complete the assignment.
         Add the necessary analyses as specified in the assignment pdf.
         """
+        retval = {}
+        
         print(results.keys())
-        retval = {'conv1_kernel': results['conv1']}
-        #retval = {'conv1_kernel': results['conv1_kernel']}
+        retval = {'conv1_kernel': results['conv1_kernel']}
+        
         print('Performing neural analysis...')
+        
         meta = self.parse_meta_data(results)
+        
         features, IT_feats = self.get_features(results, num_subsampled_features=1024)
             
         print('IT:')
@@ -462,10 +465,11 @@ class NeuralDataExperiment():
         for layer in features:
             
             print('Layer: %s' % layer)
+            
             # RDM
             retval['rdm_%s' % layer] = \
                     self.compute_rdm(features[layer], meta, mean_objects=True)
-                
+            
             # RDM correlation
             retval['spearman_corrcoef_%s' % layer] = \
                     spearmanr(
@@ -490,17 +494,5 @@ class NeuralDataExperiment():
             # within categorization test
             retval['within_categorization_%s' % layer] = \
                     self.within_categorization_test(features[layer], meta)
-                
-            if self.Config.model_name == "alexnet":
-                print("Performing IT analysis since model is alexnet...")
-                # categorization test
-                retval['categorization_it_%s' % layer] = \
-                        self.categorization_test(IT_feats, meta)
-                # continuous test
-                retval['continuous_it_%s' % layer] = \
-                        self.continuous_test(IT_feats, meta)
-                # within categorization test
-                retval['within_categorization_it_%s' % layer] = \
-                        self.within_categorization_test(IT_feats, meta)
-
+            
         return retval
