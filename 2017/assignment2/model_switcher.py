@@ -46,10 +46,7 @@ class model_switcher:
         defines the layers associated with a given model
         '''
         layer_dict = {
-            'herpaderp':['test', 'test','test'],
-            'tiny_model': ['blah'],
             'colorful_model':['oh','hi'],
-            'VAE':['oh', 'geez', 'why'],
             'shallow_bottle':['conv1','deconv1'],
             'pooled_shallow':['conv1','pool1','deconv1'],
             'bottle_model': ['conv' + str(i) for i in range(1,3+1)] + ['deconv'+ str(i) for i in range(1, 3+1)]
