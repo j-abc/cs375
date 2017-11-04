@@ -483,8 +483,8 @@ class NeuralDataExperiment():
                 retval['categorization_%s' % layer] = np.nan
             # IT regression test
             try:
-            retval['it_regression_%s' % layer] = \
-                self.regression_test(features[layer], IT_feats, meta)
+                retval['it_regression_%s' % layer] = \
+                    self.regression_test(features[layer], IT_feats, meta)
             except:
                 retval['it_regression_%s' % layer] = np.nan    
             # continuous testf
