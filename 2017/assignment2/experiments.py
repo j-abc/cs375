@@ -163,7 +163,7 @@ class Experiment():
             'dbname': self.model.dbname,
             'collname': self.model.collname,
             'exp_id': self.exp_id,
-            'save_valid_freq': 50, # 10000, in as1
+            'save_valid_freq': 200, # 10000, in as1
             'save_filters_freq': 200, # 30000, in as1
             'cache_filters_freq': 200, # 50000, in as1
             'save_metrics_freq': 200,            
