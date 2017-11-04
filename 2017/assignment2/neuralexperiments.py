@@ -424,6 +424,19 @@ class NeuralDataExperiment():
         return features, IT_feats
 
 
+    def parse_meta_data(self, results):
+        """
+        Parses the meta data from tfrecords into a tabarray
+        """
+        meta_keys = [attr[0] for attr in NeuralDataProvider.ATTRIBUTES \
+                if attr[0] not in ['images', 'it_feats']]
+        meta = {}
+        for k in meta_keys:
+            if k not in results:
+                raise KeyError('Attribute %s not loaded' % k)
+            meta[k] = np.concatenate(results[k], axis=0)
+        return tb.tabarray(columns=[list(meta[k]) for k in meta_keys], names = meta_keys)
+    
     def neural_analysis(self, results):
         """
         Performs an analysis of the results from the model on the neural data.
@@ -436,7 +449,9 @@ class NeuralDataExperiment():
         You will need to EDIT this function to fully complete the assignment.
         Add the necessary analyses as specified in the assignment pdf.
         """
-        retval = {'conv1_kernel': results['conv1_kernel']}
+        print(results.keys())
+        retval = {'conv1_kernel': results['conv1']}
+        #retval = {'conv1_kernel': results['conv1_kernel']}
         print('Performing neural analysis...')
         meta = self.parse_meta_data(results)
         features, IT_feats = self.get_features(results, num_subsampled_features=1024)

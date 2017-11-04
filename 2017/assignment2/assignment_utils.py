@@ -8,6 +8,24 @@ import scipy.signal as signal
 import matplotlib.pyplot as plt
 from tqdm import tqdm_notebook, trange
 
+def get_neural_exp_data(coll, exp_id):
+    q_val = {'exp_id' : exp_id, 'validation_results' : {'$exists' : True}}
+    
+    # create our data dictionary
+    val_steps = coll.find(q_val, projection = ['validation_results'])
+    val_keys = {val_steps[i]['validation_results'].keys()[0]: val_steps[i]['validation_results'] for i in range(val_steps.count())}
+    val_keys = {ikey: item[ikey] for ikey, item in val_keys.iteritems()}
+    val_vals = [[ikey] + ikey.split('_') for ikey in val_keys.keys()]
+    ddict = {(ilist[3], int(ilist[2])):val_keys[ilist[0]]for ilist in val_vals}
+    
+    # get unique steps and var levels
+    import pandas as pd
+    key_df = pd.DataFrame(val_vals, columns = ['key', 'fill', 'step', 'v'])
+    uni_steps = key_df.step.unique().astype(int)
+    uni_var = key_df.v.unique()
+    
+    return ddict, uni_steps, uni_var
+
 def p_get_coll(collname, dbname):
     # connect to database
     dbname = dbname
