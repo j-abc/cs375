@@ -14,10 +14,11 @@ def p_get_coll(collname, dbname):
     port = 24444
 
     conn = pm.MongoClient(port = port)
+    db = conn[dbname]
     coll = conn[dbname][collname + '.files']
 
     # print out saved experiments in collection coll
-    return coll
+    return coll, db
 
 def p22_training(exp_id, coll):
     def get_losses(exp_id):
@@ -81,8 +82,11 @@ def plot_l2_loss(l2_loss, exp_id):
     
     plt.show()
 
+
+    
 def p_get_data_list(coll, collname, step, v, exp_id, idx = -1):
     #exp_id = 'experiment_1_%s_%s_%s'%(str(step), collname, v)
+
     def get_neural_validation_data(exp_id):
         q_val = {'exp_id' : exp_id, 'validation_results' : {'$exists' : True}, 'validates': {'$exists' : True}}
         val_steps = coll.find(q_val, projection = ['validation_results', 'validates', 'exp_id'])
@@ -92,11 +96,19 @@ def p_get_data_list(coll, collname, step, v, exp_id, idx = -1):
                 res['step'] = coll.find({'_id': res['validates']})[0]['step']
             except:
                 res['step'] = -1
+        print(len(results))
         return results
-
+    
+    
     validation_data = get_neural_validation_data(exp_id=exp_id)
-    data = validation_data[idx]['validation_results']['valid0']
-    print validation_data[idx]['step'], v
+    all_keys = validation_data[idx]['validation_results'].keys()
+    data_all = {}
+    for key in all_keys:
+        print key
+        data = validation_data[idx]['validation_results'][key]
+        extraction_step = key.split('_')[1]
+        data_all[extraction_step] = data
+        print validation_data[idx]['step'], v
     return data
 
 def plot_rdms(data, target_layers, step):
@@ -156,22 +168,16 @@ def plot_categorization_results(data, target_layers, step, category=None):
         
         ### END OF YOUR CODE
         
-def plot_regression_results(data, target_layers):
+def plot_regression_results(data, target_layers, step):
     """
     Prints out the noise corrected multi rsquared loss for each layer.
+    
     You will need to EDIT this function.
     """
     for layer in target_layers:
-        try:
-            k = 'it_regression_%s' % layer
-            regression_results = data[k]
-            ### YOUR CODE HERE
-            calculated_regression_val = 1 - regression_results['noise_corrected_multi_rsquared_loss']
-            print("layer: " + layer + ", calculated_value: " + str(calculated_regression_val))
-        except:
-            print 'Oh no...' + k + ' did not regress'
-            pass
-        ### END OF YOUR CODE
+            print(data.keys())
+            k = 'it_regression_' + layer
+            print('step', step, 'layer', layer, 1 - data[k]['noise_corrected_multi_rsquared_loss'])
         
 def plot_conv1_kernels(data):
     """

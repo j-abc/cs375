@@ -45,7 +45,6 @@ class Experiment():
                 'file_pattern': 'train*.tfrecords',
                 'batch_size': self.Config.batch_size,
                     'file_grab_func': self.subselect_tfrecords,
-                
                 'shuffle': False,
                 'shuffle_seed': self.Config.seed,
                 'n_threads': 4,
@@ -164,10 +163,10 @@ class Experiment():
             'dbname': self.model.dbname,
             'collname': self.model.collname,
             'exp_id': self.exp_id,
-            'save_valid_freq': 200, # 10000, in as1
+            'save_valid_freq': 1000, # 10000, in as1
             'save_filters_freq': 1000, # 30000, in as1
             'cache_filters_freq': 1000, # 50000, in as1
-            'save_metrics_freq': 200,            
+            'save_metrics_freq': 1000,            
             'save_initial_filters' : False,
             'save_to_gfs': [],            
         }
@@ -252,6 +251,7 @@ class Experiment():
             else:
                 raise KeyError('Unknown target')
         return results
+
 class cifar10(Experiment):
     class Config():
         # provided [edit these]

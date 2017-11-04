@@ -22,7 +22,7 @@ class model_switcher:
         # now we can access dbname, collname, and layers from my_model
     '''
     
-    def __init__(self, model_name = 'herpaderp', data_name = 'cifar10', loss_name = 'default', exp_id = 'yesyes'):
+    def __init__(self, model_name = 'herpaderp', data_name = 'cifar10', loss_name = 'default', exp_id = '', test_prefix = ''):
         '''
         sets up parameters/def associated with a given model and dataset
         '''
@@ -31,6 +31,7 @@ class model_switcher:
         self.model_name = model_name
         self.loss_name  = loss_name
         self.exp_id     = exp_id
+        self.test_id    = test_prefix + exp_id
         
         # variables that we feed into train and test.py
         self.dbname     = data_name
@@ -50,7 +51,8 @@ class model_switcher:
             'colorful_model':['oh','hi'],
             'VAE':['oh', 'geez', 'why'],
             'shallow_bottle':['conv1','deconv1'],
-            'pooled_shallow':['conv1','pool1','deconv1']
+            'pooled_shallow':['conv1','pool1','deconv1'],
+            'bottle_model': ['conv' + str(i) for i in range(1,3+1)] + ['deconv'+ str(i) for i in range(1, 3+1)]
         }
         if model_name not in layer_dict.keys():
             raise Exception('Model layer names not specified')
@@ -87,7 +89,8 @@ class model_switcher:
             'VAE':'vae_loss',
             'colorful_model': 'colorful_loss',
             'shallow_bottle':'autoencoder_loss',
-            'pooled_shallow':'autoencoder_loss'
+            'pooled_shallow':'autoencoder_loss',
+            'bottle_model':'autoencoder_loss'
         }
         if loss_name == 'default':
             loss_name = default_dict[model_name]

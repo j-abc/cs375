@@ -158,7 +158,8 @@ def deconv(inp,
            batch_norm = False,
            name = 'deconv', 
            layer = None,
-           dilation = 1):
+           dilation = 1,
+           activation = None):
 
     with tf.variable_scope(layer):
         # assert out_shape is not None
@@ -211,34 +212,18 @@ def deconv(inp,
         deconv = tf.nn.bias_add(deconv, biases, name=name)
         
         output = deconv
+        if activation is not None:
+            output = getattr(tf.nn, activation)(output, name=activation)
+        
         if batch_norm:
             output = tf.nn.batch_normalization(output, mean=0, variance=1, offset=None,
                                 scale=None, variance_epsilon=1e-8, name='batch_norm')    
     return output, kernel
 
-def hourglass(inputs, train = True, norm = True, **kwargs):
-    outputs = inputs
-    # layer i has same shape as layer n-i
-    # should we put sparseness on the hourglass? 
-    
-    # how do we even -do- the hourglass
-    
-    # define an hourglass calculator
-    
-    # that will tell us the size of things and backwards
-    
-    # okay.. here's what we're going to do...
-    
-    # forward pass...
-    
-    # conv forward
-    # ksize, strides, padding, activation
-    # [64   , 6      , 'SAME',  'relu]
-    
-    
-    
-    # now... we gon make a DEEP bottle. 
+def vae_model(inputs, train = True, norm = True, **kwargs):
+    outputs = inputs 
     return outputs, {}
+
 def shallow_bottle(inputs, train = True, norm = True, **kwargs):
     # propagate input targets
     outputs = inputs
@@ -267,7 +252,8 @@ def shallow_bottle(inputs, train = True, norm = True, **kwargs):
                                                            ksize=7,
                                                            strides=6,
                                                            padding = 'VALID',
-                                                           layer = 'deconv1')
+                                                           layer = 'deconv1',
+                                                           activation = 'relu')
     # outputs['out'] 
     outputs['pred'] = outputs['deconv1']
     return outputs, {}
@@ -298,17 +284,78 @@ def pooled_shallow(inputs, train = True, norm = True, **kwargs):
                                                            ksize=7,
                                                            strides=6,
                                                            padding = 'VALID',
-                                                           layer = 'deconv1')
+                                                           layer = 'deconv1',
+                                                           activation = 'relu')
     # outputs['out'] 
     outputs['pred'] = outputs['deconv1']
     return outputs, {}
 
 
-def model_bottle(inputs, n_filters, filter_sizes, corruption = False):
+
+# def vae_loss(y_true, y_pred):
     
+
+def bottle_model(inputs, train = True, norm = True, **kwargs):
+    outputs = inputs
+    
+    # bottle parameters
+    num_lay = 3
+    encode_dict = {
+        'layer': ['conv' + str(i) for i in range(1,num_lay+1)],
+        'ksize':[7,7,7],
+        'strides':[3,2,1],
+        'channels':[10,10,10]
+        }
+    decode_dict = {
+        'layer':['deconv'+ str(i) for i in range(1, num_lay+1)],
+        'ksize':encode_dict['ksize'][::-1],
+        'strides':encode_dict['strides'][::-1],
+        'channels':encode_dict['channels'][::-1],
+        }    
+    
+    # encoder
+    shapes = []
+    current_layer = outputs['images']
+    for ilay, layer_name in enumerate(encode_dict['layer']):
+        print "Layer name: " + layer_name
+        shapes.append(current_layer.get_shape().as_list())
+        outputs[layer_name], outputs[layer_name + '_kernel'] = conv(current_layer,
+                                                                    encode_dict['channels'][ilay], 
+                                                                    ksize = encode_dict['ksize'][ilay], 
+                                                                    strides = encode_dict['ksize'][ilay],
+                                                                    padding = 'SAME',
+                                                                    layer = encode_dict['layer'][ilay],
+                                                                    activation = 'relu')
+        current_layer = outputs[encode_dict['layer'][ilay]]
+    
+    # decoder
+    shapes.reverse()
+    for ilay, shape in enumerate(shapes):
+        layer_name = decode_dict['layer'][ilay]
+        print "Layer name: " + layer_name
+        out_shape  = [tf.shape(outputs['images'])[0], shape[1], shape[2], shape[3]]
+        outputs[layer_name], outputs[layer_name + '_kernel'] = deconv(current_layer,
+                                                                      out_shape = out_shape,
+                                                                      ksize = decode_dict['ksize'][ilay],
+                                                                      strides = decode_dict['ksize'][ilay],
+                                                                      layer = decode_dict['layer'][ilay],
+                                                                      padding = 'SAME',
+                                                                      activation = 'relu')
+        current_layer = outputs[layer_name]
+    
+    # outputs
+    outputs['pred'] = current_layer
     return outputs, {}
 
-def our_bottle(inputs, train = True, norm = True, **kwargs):
+def vae_model(inputs, train = True, norm = True, **kwargs):
+    outputs = inputs
+    # encoder
+    # defint q(z|x) network
+    # 
+    # decoder
+    # generate the encoder
+    
+    # 
     return outputs, {}
-
 # what to do and how to do this stuff
+

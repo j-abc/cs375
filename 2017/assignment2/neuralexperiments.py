@@ -51,13 +51,14 @@ class NeuralDataExperiment():
         self.extraction_step = extraction_step # for reference: training point in as1
         self.Config.target_layers = self.model.layers
         self.Config.exp_id = self.exp_id
+        self.Config.test_id = model.test_id
 
         self.Config.extraction_step = self.extraction_step # training point, see as1
         self.Config.model = self.model.model_fn
         self.Config.model_name  = self.model.collname 
         self.Config.image_set = image_set # variation in the something....
         self.Config.extraction_targets = [attr[0] for attr in NeuralDataProvider.ATTRIBUTES] \
-            + self.model.layers + ['conv1_kernel']
+            + self.model.layers# + ['conv1_kernel']
         
     """
     Defines the neural data testing experiment
@@ -103,8 +104,6 @@ class NeuralDataExperiment():
         # visualizing particular kernels. this may be model specific
         # but we keep it as conv1_kernel in the spirit of as1
 
-
-        # huhhhhhhhhhhhhhhhh okay this will stay as is
         assert NeuralDataProvider.N_VAL % batch_size == 0, \
                 ('number of examples not divisible by batch size!')
         val_steps = int(NeuralDataProvider.N_VAL / batch_size)
@@ -128,7 +127,7 @@ class NeuralDataExperiment():
         """
         params = {}        
         params['validation_params'] = {
-            'valid0': {
+            'valid'+ '_' + str(self.Config.extraction_step) + '_' +  ''.join(self.Config.image_set): {
                 'data_params': {
                     # ImageNet data provider arguments
                     'func': NeuralDataProvider,
@@ -174,7 +173,6 @@ class NeuralDataExperiment():
         }
 
         """
-        save_params defines how, where and when your training results are saved
         in the database.
 
         You will need to EDIT this part. Set your own 'host' ('localhost' if local,
@@ -186,11 +184,12 @@ class NeuralDataExperiment():
             'host': 'localhost',
             'port': 24444,
             'dbname': self.model.dbname,
-            'collname': self.Config.model_name,
-            'exp_id': self.Config.exp_id + '_' + str(self.Config.extraction_step) + '_' +  ''.join(self.Config.image_set),
-            #'exp_id': self.Config.exp_id + '_' + str(self.Config.extraction_step) + '_' + self.Config.model_name + '_' +  ''.join(self.Config.image_set),
+            'collname': self.model.collname,
+            'exp_id': self.Config.exp_id + '_help',
             'save_to_gfs': self.Config.gfs_targets,
         }
+#self.Config.test_id,
+            #'exp_id': self.Config.exp_id + '_' + str(self.Config.extraction_step) + '_' + self.Config.model_name + '_' +  ''.join(self.Config.image_set),        
         print params['save_params']
 
         """
@@ -205,24 +204,98 @@ class NeuralDataExperiment():
             'host': 'localhost',
             'port': 24444,
             'dbname': self.model.dbname,
-            'collname': self.Config.model_name,
-            'exp_id': self.Config.exp_id,
+            'collname': self.model.collname, #self.Config.model_name,
+            'exp_id': self.Config.exp_id, #self.Config.test_id
             'do_restore': True,
-            'query': {'step': self.Config.extraction_step} \
-                    if self.Config.extraction_step is not None else None,
+            'query': {'step': 1000} \
+                if self.Config.extraction_step is not None else None,
         }
 
         params['inter_op_parallelism_threads'] = 500
 
         return params
+#
+#
+#
+#
+# START OF NEURAL RESPONSE REGRESSION CODE     
+    
+    def parse_meta_data(self, results):
+        """
+        Parses the meta data from tfrecords into a tabarray
+        """
+        meta_keys = [attr[0] for attr in NeuralDataProvider.ATTRIBUTES \
+                if attr[0] not in ['images', 'it_feats']]
+        meta = {}
+        for k in meta_keys:
+            print(k)
+            if k not in results:
+                raise KeyError('Attribute %s not loaded' % k)
+            print(results[k])
+            meta[k] = np.concatenate(results[k], axis=0)
+        return tb.tabarray(columns=[list(meta[k]) for k in meta_keys], names = meta_keys)
+    
+    
+    def regression_test(self, features, IT_features, meta):
+        """
+        Illustrates how to perform a regression test using dldata
+
+        You will need to EDIT this part. Define the specification to
+        do a regression on the IT neurons using compute_metric_base from dldata.
+        """
+        print('Regression test...')
+        it_reg_eval_spec = {
+            'labelfunc': lambda x: (IT_features, None),
+            'metric_kwargs': {'model_kwargs': {'n_components': 25, 'scale': False},
+            'model_type': 'pls.PLSRegression'},
+            'metric_labels': None,
+            'metric_screen': 'regression',
+            'npc_test': 10,
+            'npc_train': 70,
+            'npc_validate': 0,
+            'num_splits': 5,
+            'split_by': 'obj',
+            'test_q': {'var': ['V3', 'V6']},
+            'train_q': {'var': ['V3', 'V6']}
+        }
+        res = compute_metric_base(features, meta, it_reg_eval_spec)
+        espec = (('all','','IT_regression'), it_reg_eval_spec)
+        post_process_neural_regression_msplit_preprocessed(
+                res, self.Config.noise_estimates_path)
+        res.pop('split_results')
+        return res
+
+    def get_features(self, results, num_subsampled_features=None):
+        """
+        Extracts, preprocesses and subsamples the target features
+        and the IT features
+        """
+        features = {}
+        for layer in self.Config.target_layers:
+            feats = np.concatenate(results[layer], axis=0)
+            feats = np.reshape(feats, [feats.shape[0], -1])
+            if num_subsampled_features is not None:
+                features[layer] = \
+                        feats[:, np.random.RandomState(0).permutation(
+                            feats.shape[1])[:num_subsampled_features]]
+
+        IT_feats = np.concatenate(results['it_feats'], axis=0)
+
+        return features, IT_feats
+# END OF NEURAL RESPONSE REGRESSION NEW CODE
 
     def return_outputs(self, inputs, outputs, targets, **kwargs):
         """
         Illustrates how to extract desired targets from the model
         """
         retval = {}
+        meta = self.parse_meta_data(inputs)
+        features, IT_feats = self.get_features(inputs, num_subsampled_features=1024)
+        
         for target in targets:
             retval[target] = outputs[target]
+            retval['it_regression_' + layer] = \
+                    self.regression_test(features[layer], IT_feats, meta)
         return retval
 
     
@@ -252,20 +325,6 @@ class NeuralDataExperiment():
         return agg_res
     #  CHANGE MEEEE
     #  CHANGE MEEEE
-
-    def parse_meta_data(self, results):
-        """
-        Parses the meta data from tfrecords into a tabarray
-        """
-        meta_keys = [attr[0] for attr in NeuralDataProvider.ATTRIBUTES \
-                if attr[0] not in ['images', 'it_feats']]
-        meta = {}
-        for k in meta_keys:
-            if k not in results:
-                raise KeyError('Attribute %s not loaded' % k)
-            meta[k] = np.concatenate(results[k], axis=0)
-        return tb.tabarray(columns=[list(meta[k]) for k in meta_keys], names = meta_keys)
-
 
     def categorization_test(self, features, meta):
         """
@@ -478,7 +537,7 @@ class NeuralDataExperiment():
                     self.regression_test(features[layer], IT_feats, meta)
             except:
                 retval['it_regression_%s' % layer] = np.nan    
-            # continuous test
+            # continuous testf
             retval['continuous_%s' % layer] = \
                     self.continuous_test(features[layer], meta)
                 

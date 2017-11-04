@@ -56,6 +56,18 @@ def ae_conv1_loss(inputs, outputs, **target_params):
     l1_reg = alpha * tf.norm(flat_layer, ord=1)/tf.cast(tf.shape(flat_layer)[1], tf.float32)
     return l2_loss + l1_reg
 
+def ae_conv3_loss(inputs, outputs, **target_params):
+    my_layer = 'conv3'
+    alpha = 0.1
+    flat_layer = tf.reshape(outputs[my_layer], [outputs[my_layer].get_shape().as_list()[0], -1])
+    flat_img   = tf.reshape(outputs['images'], [outputs['images'].get_shape().as_list()[0], -1])
+    
+    l2_loss = tf.nn.l2_loss((outputs['images'] - outputs['pred']))
+    l2_scaled = l2_loss/tf.cast(tf.shape(flat_img)[1], tf.float32)
+    
+    l1_reg = alpha * tf.norm(flat_layer, ord=1)/tf.cast(tf.shape(flat_layer)[1], tf.float32)
+    return l2_loss + l1_reg
+
 def val_loss_wrapper(inputs, outputs, loss_fn):
     print 'Validation is running'
     return {'l2_loss':loss_fn(inputs,outputs),

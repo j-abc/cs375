@@ -1,0 +1,7 @@
+model_name data_name loss_name exp_id test_id
+shallow_bottle cifar10 autoencoder_loss end end
+shallow_bottle cifar10 ae_conv1_loss end end
+pooled_shallow cifar10 autoencoder_loss end end
+pooled_shallow cifar10 ae_conv1_loss end end
+bottle_model cifar10 autoencoder_loss end end
+bottle_model cifar10 ae_conv3_loss end end
