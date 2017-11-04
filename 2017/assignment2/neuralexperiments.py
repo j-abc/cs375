@@ -498,7 +498,7 @@ class NeuralDataExperiment():
                 retval['within_categorization_%s' % layer] = \
                         self.within_categorization_test(features[layer], meta)
             except:
-                retval['within_categorization_%s' % layer] =
+                retval['within_categorization_%s' % layer] = np.nan
             if self.Config.model_name == "alexnet":
                 print("Performing IT analysis since model is alexnet...")
                 # categorization test
