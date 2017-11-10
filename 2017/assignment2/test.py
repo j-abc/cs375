@@ -20,7 +20,6 @@ def get_relevant_steps(modelname, quantiles, my_model, num_steps = 10):
     connection.admin.command({'setParameter':1,"internalQueryExecMaxBlockingSortBytes":10*335544320})
     coll = connection[my_model.data_name][modelname]
     
-    
     print("Data name" + my_model.data_name)
     print("Model name " + my_model.model_name)
     print(coll.distinct('exp_id'))
@@ -52,7 +51,7 @@ def get_relevant_steps(modelname, quantiles, my_model, num_steps = 10):
     #step_qs = [steps[i] for i in indices]
     for i in range(20):
         print steps
-    steps = np.linspace(1000, 10000, 10).astype(int).tolist()
+    steps = np.linspace(1000, 10000, 2).astype(int).tolist()
     return steps
 
 def run_this(model_name, data_name, loss_name, exp_id):

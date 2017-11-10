@@ -460,39 +460,57 @@ class NeuralDataExperiment():
         features, IT_feats = self.get_features(results, num_subsampled_features=1024)
             
         print('IT:')
-        retval['rdm_it'] = \
-                self.compute_rdm(IT_feats, meta, mean_objects=True)
+        try:
+            retval['rdm_it'] = \
+                    self.compute_rdm(IT_feats, meta, mean_objects=True)
+        except:
+            retval['rdm_it'] = np.nan
+            
         for layer in features:
             
             print('Layer: %s' % layer)
             
             # RDM
-            retval['rdm_%s' % layer] = \
-                    self.compute_rdm(features[layer], meta, mean_objects=True)
-            
+            try:
+                retval['rdm_%s' % layer] = \
+                        self.compute_rdm(features[layer], meta, mean_objects=True)
+            except:
+                retval['rdm_%s' % layer] = np.nan
+                
             # RDM correlation
-            retval['spearman_corrcoef_%s' % layer] = \
-                    spearmanr(
-                            np.reshape(retval['rdm_%s' % layer], [-1]),
-                            np.reshape(retval['rdm_it'], [-1])
-                            )[0]
-                
+            try:
+                retval['spearman_corrcoef_%s' % layer] = \
+                        spearmanr(
+                                np.reshape(retval['rdm_%s' % layer], [-1]),
+                                np.reshape(retval['rdm_it'], [-1])
+                                )[0]
+            except:
+                retval['spearman_corrcoef_%s' % layer] = np.nan
+
             # categorization test
-            retval['categorization_%s' % layer] = \
-                    self.categorization_test(features[layer], meta)
-       
-            # IT regression test
-            #try:
-            retval['it_regression_%s' % layer] = \
-                self.regression_test(features[layer], IT_feats, meta)
-            #except:
-            #    retval['it_regression_%s' % layer] = np.nan    
-            # continuous testf
-            retval['continuous_%s' % layer] = \
-                    self.continuous_test(features[layer], meta)
+            try:
+                retval['categorization_%s' % layer] = \
+                        self.categorization_test(features[layer], meta)
+            except:
+                retval['categorization_%s' % layer] = np.nan
                 
+            # IT regression test
+            try:
+                retval['it_regression_%s' % layer] = \
+                    self.regression_test(features[layer], IT_feats, meta)
+            except:
+                retval['it_regression_%s' % layer] = np.nan    
+            # continuous testf
+            try:
+                retval['continuous_%s' % layer] = \
+                        self.continuous_test(features[layer], meta)
+            except:
+                retval['continuous_%s' % layer] = np.nan
+                
+            try:
             # within categorization test
-            retval['within_categorization_%s' % layer] = \
-                    self.within_categorization_test(features[layer], meta)
-            
+                retval['within_categorization_%s' % layer] = \
+                        self.within_categorization_test(features[layer], meta)
+            except:
+                retval['within_categorization_%s' % layer] = np.nan
         return retval

@@ -141,13 +141,15 @@ def plot_rdms(data, target_layers, step):
 Please implement 'plot_rdms' that visualizes the rdms of all target_layers and displays the layer name as well as the spearman_corrcoef and the iteration step in the plot title.    
     """
     for i, layer in enumerate(target_layers):
-        rdm = data['rdm_%s' % layer]
-        spearman_corrcoef = data['spearman_corrcoef_%s' % layer]
-        ### YOUR CODE HERE
-        fig = plt.figure(figsize=(8, 8))
-        m = fig.gca().matshow(rdm)
-        plt.colorbar(m)
-        plt.title(str(layer) + ": spearman_corr_coeff = " + str(spearman_corrcoef) + "; step: " + str(step))
+        my_key = 'rdm_%s' % layer
+        if my_key in data:
+            rdm = data['rdm_%s' % layer]
+            spearman_corrcoef = data['spearman_corrcoef_%s' % layer]
+            ### YOUR CODE HERE
+            fig = plt.figure(figsize=(8, 8))
+            m = fig.gca().matshow(rdm)
+            plt.colorbar(m)
+            plt.title(str(layer) + ": spearman_corr_coeff = " + str(spearman_corrcoef) + "; step: " + str(step))
 
         ### END OF YOUR CODE
         
@@ -161,12 +163,14 @@ def plot_categorization_results(data, target_layers, step, category=None):
         if category:
             k = 'within_categorization_%s' % layer                
             try:
-                categorization_results = data[k][category]['result_summary']
+                if 'result_summary' in data[k][category]:
+                    categorization_results = data[k][category]['result_summary']
             except:
                 raise Exception(category + " is not a real category in data...")
         else:
             k = 'categorization_%s' % layer
-            categorization_results = data[k]['result_summary']
+            if 'result_summary' in data[k]:
+                categorization_results = data[k]['result_summary']
         ### YOUR CODE HERE
         fig = plt.figure(figsize=(8, 8))
         m = fig.gca().matshow(np.array(categorization_results['cms']).mean(2))
@@ -203,17 +207,18 @@ def plot_conv1_kernels(data):
     
     You will need to EDIT this function.
     """
-    kernels = np.array(data['conv1_kernel'])
-    x = 5
-    y = 6
-    f, axarr = plt.subplots(x, y, figsize=(4*x, 4*y))
-    for i in range(x):
-        for j in range(y):
-            m = axarr[i,j].imshow(kernels[:,:,:,i*y + j])
-            axarr[i,j].get_xaxis().set_visible(False)
-            axarr[i,j].get_yaxis().set_visible(False)
-    f.subplots_adjust(hspace=0)
-    f.subplots_adjust(wspace=0)
+    if 'conv1_kernel' in data:
+        kernels = np.array(data['conv1_kernel'])
+        x = 5
+        y = 6
+        f, axarr = plt.subplots(x, y, figsize=(4*x, 4*y))
+        for i in range(x):
+            for j in range(y):
+                m = axarr[i,j].imshow(kernels[:,:,:,i*y + j])
+                axarr[i,j].get_xaxis().set_visible(False)
+                axarr[i,j].get_yaxis().set_visible(False)
+        f.subplots_adjust(hspace=0)
+        f.subplots_adjust(wspace=0)
     
 def plot_conv1_kernels2(data, step, x = 8, y = 5):
     """
