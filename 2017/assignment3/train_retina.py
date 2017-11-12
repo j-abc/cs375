@@ -19,7 +19,7 @@ stim_type = 'whitenoise'
 # Figure out the hostname
 host = os.uname()[1]
 #if 'neuroaicluster' in host:
-if True # the line above seemed useless
+if True: # the line above seemed useless
     if train_net:
         print('In train mode...')
         TOTAL_BATCH_SIZE = 5000
