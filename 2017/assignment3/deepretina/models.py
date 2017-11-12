@@ -3,7 +3,7 @@ Construct Keras models
 """
 
 from __future__ import absolute_import, division, print_function
-from keras.models import Sequential, Graph
+from keras.models import Sequential
 from keras.layers.core import Dropout, Dense, Activation, Flatten
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.layers.recurrent import LSTM, SimpleRNN

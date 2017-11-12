@@ -313,6 +313,6 @@ def train_cnn():
     base.train_from_params(**params)
  
 if __name__ == '__main__':
-    train_cnn()
+    train_cnn
     # train_ln
 
