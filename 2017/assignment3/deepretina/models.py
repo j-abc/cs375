@@ -11,7 +11,7 @@ from keras.layers.advanced_activations import PReLU#, ParametricSoftplus
 from kfs.layers.advanced_activations import ParametricSoftplus
 from keras.layers.normalization import BatchNormalization
 from keras.layers.noise import GaussianNoise, GaussianDropout
-from keras.regularizers import l1l2, activity_l1l2, l2
+from keras.regularizers import l1_l2, activity_l1l2, l2
 from .utils import notify
 
 __all__ = ['sequential', 'ln', 'convnet',
