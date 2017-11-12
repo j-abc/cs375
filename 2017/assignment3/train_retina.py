@@ -6,7 +6,9 @@ import numpy as np
 import tensorflow as tf
 
 from tfutils import base, data, model, optimizer, utils
-
+from deepretina.models import ln, convnet
+from deepretina.metrics import cc
+from keras.models import Sequential, Graph
 import copy
 
 # toggle this to train or to validate at the end
@@ -58,6 +60,8 @@ print('TOTAL BATCH SIZE:', OUTPUT_BATCH_SIZE)
 NUM_BATCHES_PER_EPOCH = N_TRAIN // OUTPUT_BATCH_SIZE
 IMAGE_SIZE_RESIZE = 50
 
+NCELLS = 5
+
 DATA_PATH = '/datasets/deepretina_data/tf_records/' + stim_type
 print('Data path: ', DATA_PATH)
 
@@ -98,28 +102,40 @@ class retinaTF(data.TFRecordsParallelByFileProvider):
 
 def ln(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_GPUS, seed=0, cfg_final=None):
     params = OrderedDict()
-    batch_size = inputs['images'].get_shape().as_list()[0]
+    input_shape = inputs['images'].get_shape().as_list()
+    batch_size = input_shape[0]
     params['stim_type'] = stim_type
     params['train'] = train
     params['batch_size'] = batch_size
 
     # implement your LN model here
+    layers = ln(input_shape, NCELLS, weight_init='normal', l2_reg=l2)
+    model = Sequential(layers)
+    out = model(inputs['images'])
 
     return out, params
 
 def cnn(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_GPUS, seed=0, cfg_final=None):
     params = OrderedDict()
-    batch_size = inputs['images'].get_shape().as_list()[0]
+    input_shape = inputs['images'].get_shape().as_list()
+    batch_size = input_shape[0]
     params['stim_type'] = stim_type
     params['train'] = train
     params['batch_size'] = batch_size
 
     # implement your CNN here
-
+    layers = convnet(input_shape, NCELLS, num_filters=(8, 16),
+                     filter_size=(15, 7), weight_init='normal',
+                     l2_reg_weights=(0.01, 0.01, 0.01),
+                     l1_reg_activity=(0.0, 0.0, 0.001),
+                     dropout=(0.1, 0.0))
+    model = Sequential(layers)
+    out = model(inputs['images'])
     return out, params
 
 def poisson_loss(logits, labels):
     # implement the poisson loss here
+    return cc(labels, logits)
 
 def mean_loss_with_reg(loss):
     return tf.reduce_mean(loss) + tf.add_n(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
@@ -282,7 +298,7 @@ def train_ln():
     params['save_params']['collname'] = stim_type
     params['save_params']['exp_id'] = 'trainval0'
 
-    params['model_params'] = # FILL IN HERE
+    params['model_params']['func'] = ln
     params['learning_rate_params']['learning_rate'] = 1e-3
     base.train_from_params(**params)
 
@@ -292,11 +308,11 @@ def train_cnn():
     params['save_params']['collname'] = stim_type
     params['save_params']['exp_id'] = 'trainval0'
 
-    params['model_params'] = # FILL IN HERE
+    params['model_params']['func'] = cnn
     params['learning_rate_params']['learning_rate'] = 1e-3
     base.train_from_params(**params)
  
 if __name__ == '__main__':
-    # train_cnn
+    train_cnn()
     # train_ln
 
