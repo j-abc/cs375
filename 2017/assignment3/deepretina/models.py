@@ -11,7 +11,7 @@ from keras.layers.advanced_activations import PReLU#, ParametricSoftplus
 from kfs.layers.advanced_activations import ParametricSoftplus
 from keras.layers.normalization import BatchNormalization
 from keras.layers.noise import GaussianNoise, GaussianDropout
-from keras.regularizers import l1_l2, activity_l1l2, l2
+from keras.regularizers import l1_l2, l2
 from .utils import notify
 
 __all__ = ['sequential', 'ln', 'convnet',
@@ -93,8 +93,8 @@ def nips_conv(num_cells):
             'border_mode': 'valid',
             'subsample': (1, 1),
             'init': 'normal',
-            'W_regularizer': l1l2(*w_args),
-            'activity_regularizer': activity_l1l2(*act_args),
+            'W_regularizer': l1_l2(*w_args),
+            'activity_regularizer': l1_l2(*act_args),
         }
         if len(layers) == 0:
             kwargs['input_shape'] = input_shape
@@ -113,8 +113,8 @@ def nips_conv(num_cells):
 
     # Add a final dense (affine) layer
     layers.append(Dense(num_cells, init='normal',
-                        W_regularizer=l1l2(0., l2_weight),
-                        activity_regularizer=activity_l1l2(1e-3, 0.)))
+                        W_regularizer=l1_l2(0., l2_weight),
+                        activity_regularizer=l1_l2(1e-3, 0.)))
 
     # Finish it off with a parameterized softplus
     layers.append(ParametricSoftplus())
@@ -163,8 +163,8 @@ def convnet(input_shape, nout,
     def _regularize(layer_idx):
         """Small helper function to define per layer regularization"""
         return {
-            'W_regularizer': l1l2(l1_reg_weights[layer_idx], l2_reg_weights[layer_idx]),
-            'activity_regularizer': activity_l1l2(l1_reg_activity[layer_idx], l2_reg_activity[layer_idx]),
+            'W_regularizer': l1_l2(l1_reg_weights[layer_idx], l2_reg_weights[layer_idx]),
+            'activity_regularizer': l1_l2(l1_reg_activity[layer_idx], l2_reg_activity[layer_idx]),
         }
 
     # first convolutional layer
