@@ -8,7 +8,7 @@ import tensorflow as tf
 from tfutils import base, data, model, optimizer, utils
 from deepretina.models import ln, convnet
 from deepretina.metrics import cc
-from keras.models import Sequential, Graph
+from keras.models import Sequential
 import copy
 
 # toggle this to train or to validate at the end
