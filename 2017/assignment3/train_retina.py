@@ -6,7 +6,7 @@ import numpy as np
 import tensorflow as tf
 
 from tfutils import base, data, model, optimizer, utils
-from deepretina.models import ln, convnet
+from deepretina.models import ln, convnet, nips_conv
 from deepretina.metrics import cc
 from keras.models import Sequential
 import copy
@@ -125,11 +125,7 @@ def cnn(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_G
     params['batch_size'] = batch_size
 
     # implement your CNN here
-    layers = convnet(input_shape, NCELLS, num_filters=(8, 16),
-                     filter_size=(15, 7), weight_init='normal',
-                     l2_reg_weights=(0.01, 0.01, 0.01),
-                     l1_reg_activity=(0.0, 0.0, 0.001),
-                     dropout=(0.1, 0.0))
+    layers = nips_conv(NCELLS)
     model = Sequential(layers)
     out = model(inputs['images'])
     return out, params
