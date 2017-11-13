@@ -118,6 +118,7 @@ def colorful_model(inputs, train=True, norm=True, **kwargs):
     print shp,(shp[0],shp[1]/4,shp[2]/4,313)
     data_l.set_shape((shp[0],shp[1],shp[2],1))
     gt_ab_313.set_shape((shp[0],shp[1]/4,shp[2]/4,313))
+    prior_boost_nongray.set_shape((shp[0],shp[1],shp[2],1))
     # propagate input targets
     outputs = inputs
     outputs['data_l'] = data_l

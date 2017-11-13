@@ -15,7 +15,7 @@ def colorful_loss(inputs, outputs, **target_params):
     dl2c = tf.gradients(g_loss, outputs['conv8_313'])
     dl2c = tf.stop_gradient(dl2c)
     #
-    loss = tf.reduce_sum(dl2c * outputs['conv8_313'] * outputs['prior_boost_nongray']) #+ tf.add_n(tf.get_collection('losses', scope=scope))
+    loss = tf.reduce_sum(dl2c * outputs['conv8_313'] * outputs['prior_boost_nongray'], [1, 2, 3]) #+ tf.add_n(tf.get_collection('losses', scope=scope))
     return loss
 
 def vae_loss(inputs, outputs, **target_params):
