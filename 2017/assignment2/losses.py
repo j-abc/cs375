@@ -10,7 +10,12 @@ def colorful_loss(inputs, outputs, **target_params):
     test_gt = tf.reduce_sum(flat_gt_ab_313, 1)
     tf.Print(test_pred, [test_pred], message="Pred: ")
     tf.Print(test_gt, [test_gt], message="Test: ")
-    loss = tf.nn.softmax_cross_entropy_with_logits(logits=flat_pred, labels=flat_gt_ab_313)
+    g_loss = tf.nn.softmax_cross_entropy_with_logits(logits=flat_pred, labels=flat_gt_ab_313)
+    # rebalance
+    dl2c = tf.gradients(g_loss, outputs['conv8_313'])
+    dl2c = tf.stop_gradient(dl2c)
+    #
+    loss = tf.reduce_sum(dl2c * outputs['conv8_313'] * outputs['prior_boost_nongray']) #+ tf.add_n(tf.get_collection('losses', scope=scope))
     return loss
 
 def vae_loss(inputs, outputs, **target_params):

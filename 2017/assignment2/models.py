@@ -122,6 +122,7 @@ def colorful_model(inputs, train=True, norm=True, **kwargs):
     outputs = inputs
     outputs['data_l'] = data_l
     outputs['gt_ab_313'] = gt_ab_313
+    outputs['prior_boost_nongray'] = prior_boost_nongray
     dropout = None#.5 if train else None
     input_to_network = data_l
     weight_decay = 1e-3
