@@ -137,7 +137,7 @@ class Experiment():
 
         # this params taken from the tutorial
         params['learning_rate_params'] = {
-            'learning_rate': 1e-4,
+            'learning_rate': 3e-5,
             'decay_steps': 2000,
             'decay_rate': 0.95,
             'staircase': True,
