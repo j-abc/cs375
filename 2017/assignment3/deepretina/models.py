@@ -68,10 +68,10 @@ def ln(input_shape, nout, weight_init='glorot_normal', l2_reg=0.0):
     return layers
 
 
-def nips_conv(num_cells):
+def nips_conv(input_shape, num_cells):
     """Hard-coded model for NIPS"""
     layers = list()
-    input_shape = (40, 50, 50)
+    #input_shape = (40, 50, 50)
 
     # injected noise strength
     sigma = 0.1
