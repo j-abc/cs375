@@ -261,7 +261,7 @@ def preprocess(data):
 
   return data_l.astype(np.float32), gt_ab_313.astype(np.float32), prior_boost_nongray.astype(np.float32)
 
-def softmax(x, temperature = 0.38):
+def softmax(x, temperature = 0.00000001):
     """Compute softmax values for each sets of scores in x."""
     e_x = np.exp((x - np.expand_dims(np.max(x, axis=-1), axis=-1)) / temperature )
     return e_x / np.expand_dims(e_x.sum(axis=-1), axis=-1) # only difference
