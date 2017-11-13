@@ -125,7 +125,7 @@ def cnn(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_G
     params['batch_size'] = batch_size
 
     # implement your CNN here
-    layers = nips_conv(input_shape, NCELLS)
+    layers = nips_conv(input_shape[1:], NCELLS)
     model = Sequential(layers)
     out = model(inputs['images'])
     return out, params
