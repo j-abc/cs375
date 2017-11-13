@@ -8,7 +8,7 @@ from keras.layers.core import Dropout, Dense, Activation, Flatten
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.layers.recurrent import LSTM, SimpleRNN
 from keras.layers.advanced_activations import PReLU#, ParametricSoftplus
-from ..activations import ParametricSoftplus
+from .activations import ParametricSoftplus
 from keras.layers.normalization import BatchNormalization
 from keras.layers.noise import GaussianNoise, GaussianDropout
 from keras.regularizers import l1_l2, l2
