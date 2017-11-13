@@ -132,7 +132,8 @@ def cnn(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_G
 
 def poisson_loss(logits, labels):
     # implement the poisson loss here
-    return cc(labels, logits)
+    loss = tf.py_func(cc, [labels, logits], tf.float32)
+    return loss
 
 def mean_loss_with_reg(loss):
     return tf.reduce_mean(loss) + tf.add_n(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
