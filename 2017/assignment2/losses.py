@@ -4,11 +4,10 @@ import tensorflow as tf
 from color_utils import preprocess
 
 def colorful_loss(inputs, outputs, **target_params):
-    batch_size = outputs['conv8_313'].get_shape().as_list()[0]
     flat_pred = tf.reshape(outputs['conv8_313'], [-1, 313])
     flat_gt_ab_313 = tf.reshape(outputs['gt_ab_313'], [-1,313])
     loss = tf.nn.softmax_cross_entropy_with_logits(logits=flat_pred, labels=flat_gt_ab_313)
-    return loss# / batch_size
+    return loss
 
 def vae_loss(inputs, outputs, **target_params):
     # extract vars
