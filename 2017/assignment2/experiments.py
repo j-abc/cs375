@@ -60,7 +60,7 @@ class Experiment():
             },
             'num_steps': self.Config.train_steps,
             'thres_loss': self.Config.thres_loss,
-            'validate_first': True,            
+            'validate_first': False,            
         }
         
         """
