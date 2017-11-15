@@ -20,8 +20,8 @@ def conv(inp,
          name='conv',
          layer = None,
          ):
-	if not layer:
-		layer = name
+    if not layer:
+        layer = name
     with tf.variable_scope(layer):
         # assert out_shape is not None
         if weight_decay is None:
@@ -76,8 +76,8 @@ def fc(inp,
        dropout_seed=None,
        name='fc',
        layer=None):
-	if not layer:
-		layer = name
+    if not layer:
+        layer = name
     with tf.variable_scope(layer):
         if weight_decay is None:
             weight_decay = 0.
