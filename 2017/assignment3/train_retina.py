@@ -176,6 +176,11 @@ def mean_losses_keep_rest(step_results):
         else:
             retval[k] = plucked
     return retval
+    
+def gaussian_noise_layer(input_layer, sigma):
+    noise = tf.random_normal(shape=tf.shape(input_layer), 
+        mean=0.0, stddev=sigma, dtype=tf.float32)
+    return input_layer + noise
 
 # model parameters
 
