@@ -10,7 +10,7 @@ from deepretina.models import ln, convnet, nips_conv
 from deepretina.metrics import cc
 from keras.models import Sequential
 import copy
-from tfutils.model import conv, fc
+from layers import conv, fc, gaussian_noise_layer
 
 # toggle this to train or to validate at the end
 train_net = True
@@ -176,11 +176,8 @@ def mean_losses_keep_rest(step_results):
         else:
             retval[k] = plucked
     return retval
-    
-def gaussian_noise_layer(input_layer, sigma):
-    noise = tf.random_normal(shape=tf.shape(input_layer), 
-        mean=0.0, stddev=sigma, dtype=tf.float32)
-    return input_layer + noise
+
+
 
 # model parameters
 
