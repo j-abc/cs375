@@ -13,6 +13,7 @@ from keras.layers.normalization import BatchNormalization
 from keras.layers.noise import GaussianNoise, GaussianDropout
 from keras.regularizers import l1_l2, l2
 from .utils import notify
+from tfutils.model import conv, fc
 
 __all__ = ['sequential', 'ln', 'convnet',
            'fixedlstm', 'experimentallstm', 'nips_conv']
@@ -67,59 +68,6 @@ def ln(input_shape, nout, weight_init='glorot_normal', l2_reg=0.0):
     layers.append(ParametricSoftplus())
     return layers
 
-
-def nips_conv(input_shape, num_cells):
-    """Hard-coded model for NIPS"""
-    layers = list()
-    #input_shape = (40, 50, 50)
-
-    # injected noise strength
-    sigma = 0.1
-
-    # convolutional layer sizes
-    convlayers = [(16, 15), (8, 9)]
-
-    # l2_weight_regularization for every layer
-    l2_weight = 1e-3
-
-    # weight and activity regularization
-    W_reg = [(0., l2_weight), (0., l2_weight)]
-    act_reg = [(0., 0.), (0., 0.)]
-
-    # loop over convolutional layers
-    for (n, size), w_args, act_args in zip(convlayers, W_reg, act_reg):
-        args = (n, size, size)
-        kwargs = {
-            'border_mode': 'valid',
-            'subsample': (1, 1),
-            'init': 'normal',
-            'W_regularizer': l1_l2(*w_args),
-            'activity_regularizer': l1_l2(*act_args),
-        }
-        if len(layers) == 0:
-            kwargs['input_shape'] = input_shape
-
-        # add convolutional layer
-        layers.append(Convolution2D(*args, **kwargs))
-
-        # add gaussian noise
-        layers.append(GaussianNoise(sigma))
-
-        # add ReLu
-        layers.append(Activation('relu'))
-
-    # flatten
-    layers.append(Flatten())
-
-    # Add a final dense (affine) layer
-    layers.append(Dense(num_cells, init='normal',
-                        W_regularizer=l1_l2(0., l2_weight),
-                        activity_regularizer=l1_l2(1e-3, 0.)))
-
-    # Finish it off with a parameterized softplus
-    layers.append(ParametricSoftplus())
-
-    return layers
 
 
 def convnet(input_shape, nout,
@@ -245,3 +193,89 @@ def fixedlstm(input_shape, nout, num_hidden=1600, weight_init='he_normal', l2_re
                         activation='softplus'))
 
     return layers
+
+
+
+def nips_conv(input_shape, num_cells):
+    """Hard-coded model for NIPS"""
+    layers = list()
+    #input_shape = (40, 50, 50)
+
+    # injected noise strength
+    sigma = 0.1
+
+    # convolutional layer sizes
+    convlayers = [(16, 15), (8, 9)]
+
+    # l2_weight_regularization for every layer
+    l2_weight = 1e-3
+
+    # weight and activity regularization
+    W_reg = [(0., l2_weight), (0., l2_weight)]
+    act_reg = [(0., 0.), (0., 0.)]
+
+    # loop over convolutional layers
+    for (n, size), w_args, act_args in zip(convlayers, W_reg, act_reg):
+        args = (n, size, size)
+        kwargs = {
+            'border_mode': 'valid',
+            'subsample': (1, 1),
+            'init': 'normal',
+            'W_regularizer': l1_l2(*w_args),
+            'activity_regularizer': l1_l2(*act_args),
+        }
+        if len(layers) == 0:
+            kwargs['input_shape'] = input_shape
+
+        # add convolutional layer
+        layers.append(Convolution2D(*args, **kwargs))
+
+        # add gaussian noise
+        layers.append(GaussianNoise(sigma))
+
+        # add ReLu
+        layers.append(Activation('relu'))
+
+    # flatten
+    layers.append(Flatten())
+
+    # Add a final dense (affine) layer
+    layers.append(Dense(num_cells, init='normal',
+                        W_regularizer=l1_l2(0., l2_weight),
+                        activity_regularizer=l1_l2(1e-3, 0.)))
+
+    # Finish it off with a parameterized softplus
+    layers.append(ParametricSoftplus())
+
+    return layers
+
+def gaussian_noise_layer(input_layer, sigma):
+    noise = tf.random_normal(shape=tf.shape(input_layer), 
+        mean=0.0, stddev=sigma, dtype=tf.float32)
+    return input_layer + noise
+
+def three_layer_cnn(inputs, train=True, norm=True, **kwargs):
+    '''
+    TF Utils friendly implementation of NIPS ConvNet.
+    '''
+    #begin
+    outputs = inputs
+    input_to_network['images']
+
+    # first conv layer
+    outputs['conv1'] = conv(outputs['images'], 16, 15, 1, layer = 'conv1'
+        padding = 'VALID', batch_norm = False, weight_decay = 1e-3)
+    # gaussian noise
+    if train:
+        outputs['conv1'] = gaussian_noise_layer(outputs['conv1'], 0.1)
+    # second layer
+    outputs['conv2'] = conv(outputs['conv1'], 8, 9, 1, layer = 'conv2'
+        padding = 'VALID', batch_norm = False, weight_decay = 1e-3)
+    # gaussian noise
+    if train:
+        outputs['conv2'] = gaussian_noise_layer(outputs['conv2'], 0.1)
+    # final fc layer
+    outputs['pred'] = fc(outputs['conv2'], 5, layer = 'fc1'
+        weight_decay = 1e-3, activation = 'softplus')
+    # fini
+    return outputs, {}

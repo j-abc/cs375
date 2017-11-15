@@ -124,11 +124,25 @@ def cnn(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_G
     params['train'] = train
     params['batch_size'] = batch_size
 
-    # implement your CNN here
-    layers = nips_conv(input_shape[1:], NCELLS)
-    model = Sequential(layers)
-    out = model(inputs['images'])
-    return out, params
+    #start
+    outputs = inputs
+    # first conv layer
+    outputs['conv1'] = conv(outputs['images'], 16, 15, 1, layer = 'conv1'
+        padding = 'VALID', batch_norm = False, weight_decay = 1e-3)
+    # gaussian noise
+    if train:
+        outputs['conv1'] = gaussian_noise_layer(outputs['conv1'], 0.1)
+    # second layer
+    outputs['conv2'] = conv(outputs['conv1'], 8, 9, 1, layer = 'conv2'
+        padding = 'VALID', batch_norm = False, weight_decay = 1e-3)
+    # gaussian noise
+    if train:
+        outputs['conv2'] = gaussian_noise_layer(outputs['conv2'], 0.1)
+    # final fc layer
+    outputs['pred'] = fc(outputs['conv2'], 5, layer = 'fc1'
+        weight_decay = 1e-3, activation = 'softplus')
+    # fini
+    return outputs, params
 
 def poisson_loss(logits, labels):
     # implement the poisson loss here
