@@ -75,7 +75,7 @@ def fc(inp,
        dropout=None,
        dropout_seed=None,
        name='fc',
-       layer='blah'):
+       layer=None):
 	if not layer:
 		layer = name
     with tf.variable_scope(layer):
