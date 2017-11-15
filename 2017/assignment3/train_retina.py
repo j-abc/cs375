@@ -10,6 +10,7 @@ from deepretina.models import ln, convnet, nips_conv
 from deepretina.metrics import cc
 from keras.models import Sequential
 import copy
+from tfutils.model import conv, fc
 
 # toggle this to train or to validate at the end
 train_net = True
