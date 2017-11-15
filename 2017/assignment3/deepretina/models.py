@@ -248,34 +248,3 @@ def nips_conv(input_shape, num_cells):
     layers.append(ParametricSoftplus())
 
     return layers
-
-def gaussian_noise_layer(input_layer, sigma):
-    noise = tf.random_normal(shape=tf.shape(input_layer), 
-        mean=0.0, stddev=sigma, dtype=tf.float32)
-    return input_layer + noise
-
-def three_layer_cnn(inputs, train=True, norm=True, **kwargs):
-    '''
-    TF Utils friendly implementation of NIPS ConvNet.
-    '''
-    #begin
-    outputs = inputs
-    input_to_network['images']
-
-    # first conv layer
-    outputs['conv1'] = conv(outputs['images'], 16, 15, 1, name = 'conv1',
-        padding = 'VALID', batch_norm = False, weight_decay = 1e-3)
-    # gaussian noise
-    if train:
-        outputs['conv1'] = gaussian_noise_layer(outputs['conv1'], 0.1)
-    # second layer
-    outputs['conv2'] = conv(outputs['conv1'], 8, 9, 1, name = 'conv2',
-        padding = 'VALID', batch_norm = False, weight_decay = 1e-3)
-    # gaussian noise
-    if train:
-        outputs['conv2'] = gaussian_noise_layer(outputs['conv2'], 0.1)
-    # final fc layer
-    outputs['pred'] = fc(outputs['conv2'], 5, name = 'fc1',
-        weight_decay = 1e-3, activation = 'softplus')
-    # fini
-    return outputs, {}
