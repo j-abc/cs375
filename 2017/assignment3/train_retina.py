@@ -145,9 +145,9 @@ def cnn(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_G
     # fini
     return outputs, params
 
-def poisson_loss(logits, labels):
+def poisson_loss(outputs, labels):
     # implement the poisson loss here
-    loss = tf.py_func(cc, [labels, logits], tf.float32)
+    loss = tf.py_func(cc, [labels, outputs['pred']], tf.float32)
     return loss
 
 def mean_loss_with_reg(loss):
@@ -162,7 +162,7 @@ def online_agg(agg_res, res, step):
 
 def loss_metric(inputs, outputs, target, **kwargs):
     metrics_dict = {}
-    metrics_dict['poisson_loss'] = mean_loss_with_reg(poisson_loss(logits=outputs['pred'], labels=inputs[target]), **kwargs)
+    metrics_dict['poisson_loss'] = mean_loss_with_reg(poisson_loss(outputs=outputs, labels=inputs[target]), **kwargs)
     return metrics_dict
 
 def mean_losses_keep_rest(step_results):
