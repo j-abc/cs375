@@ -119,3 +119,11 @@ def gaussian_noise_layer(input_layer, sigma):
     noise = tf.random_normal(shape=tf.shape(input_layer), 
         mean=0.0, stddev=sigma, dtype=tf.float32)
     return input_layer + noise
+
+
+def initializer(kind='xavier', *args, **kwargs):
+    if kind == 'xavier':
+        init = tf.contrib.layers.xavier_initializer(*args, **kwargs)
+    else:
+        init = getattr(tf, kind + '_initializer')(*args, **kwargs)
+    return init
