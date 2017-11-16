@@ -67,7 +67,7 @@ NCELLS = 5
 
 DATA_PATH = '/datasets/deepretina_data/tf_records/' + stim_type
 WHITE_DATA_PATH = '/datasets/deepretina_data/tf_records/' + 'whitenoise'
-NATURAL_DATA_PATH = '/datasets/deepretina_data/tf_records/' + 'naturalscene'
+NATURAL_DATA_PATH = '/datasets/deepretina_data/tf_records/' + 'naturalscenePATH'
 print('Data path: ', DATA_PATH)
 
 # data provider
@@ -390,7 +390,7 @@ def train_cnn(stim_type = 'whitenoise'):
 
     # custom crap for the train stim type
     stim_params = get_stim_params(stim_type)
-    params['train_params']['data_params']['source_dirs'] = stim_params['DATA_PATH']
+    params['train_params']['data_params']['source_dirs'] =[os.path.join(stim_params['DATA_PATH'], 'images'), os.path.join(stim_params['DATA_PATH'], 'labels')] 
     NUM_BATCHES_PER_EPOCH = stim_params['N_TRAIN'] // OUTPUT_BATCH_SIZE
     params['train_params']['num_steps'] = 50 * NUM_BATCHES_PER_EPOCH
     params['learning_rate_params']['decay_steps'] = NUM_BATCHES_PER_EPOCH
