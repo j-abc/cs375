@@ -16,8 +16,7 @@ stim_type = 'whitenoise'
 #stim_type = 'naturalscene'
 # Figure out the hostname
 host = os.uname()[1]
-#if 'neuroaicluster' in host:
-if True:
+if True:  #'neuroaicluster' in host:
     if train_net:
         print('In train mode...')
         TOTAL_BATCH_SIZE = 5000
@@ -173,7 +172,7 @@ def mean_losses_keep_rest(step_results):
 default_params = {
     'save_params': {
         'host': 'localhost',
-        'port': 27017,
+        'port': 24444,
         'dbname': 'deepretina',
         'collname': stim_type,
         'exp_id': 'trainval0',
@@ -328,6 +327,6 @@ def train_cnn():
     base.train_from_params(**params)
  
 if __name__ == '__main__':
-    # train_cnn
-    train_ln
+    #train_cnn()
+    train_ln()
 
