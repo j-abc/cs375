@@ -22,7 +22,7 @@ E = np.array([
 
 print cc(D,E)
 
-mean_loss, loss = tf.py_func(cc, [A, B], tf.float32)
+mean_loss, loss = tf.py_func(cc, [A, B], [tf.float32,tf.float32])
 
 
 with tf.Session() as sess:
