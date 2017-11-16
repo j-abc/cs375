@@ -141,8 +141,12 @@ def cnn(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_G
     return outputs, params
 
 def poisson_loss(outputs, inputs):
+    # epsilon
+    epsilon = tf.constant(1e-8)
     # implement the poisson loss here
-    loss = tf.py_func(cc, [inputs['labels'], outputs['pred']], tf.float32)
+    # K.mean(y_pred - y_true * K.log(y_pred + K.epsilon()), axis=-1)
+    loss = tf.reduce_.mean(outputs['pred'] - inputs['labels'] * tf.log(outputs['pred'] + epsilon), axis=-1)
+    #loss = tf.py_func(cc, [inputs['labels'], outputs['pred']], tf.float32)
     return loss
 
 def mean_loss_with_reg(loss):
