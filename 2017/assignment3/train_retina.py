@@ -163,7 +163,7 @@ def mean_loss_with_reg(loss):
 def online_agg(agg_res, res, step):
     special_k = ['pred', 'labels']
     if agg_res is None:
-        agg_res = {k: [] if k not in special_k else k: None for k in res}
+        agg_res = {k: [] if k not in special_k else None for k in res}
     for k, v in res.items():
         if k not in special_k:
             agg_res[k].append(np.mean(v))
