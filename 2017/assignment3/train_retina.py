@@ -112,7 +112,8 @@ def ln(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_GP
     
     xf = tf.reshape(inputs['images'], [-1,100000])
     b = tf.get_variable(shape=[5], dtype=tf.float32, regularizer=tf.contrib.layers.l2_regularizer(1e-3), name='b') 
-    w = tf.get_variable(shape=[5,100000], dtype=tf.float32, regularizer=tf.contrib.layers.l2_regularizer(1e-3), name='w')
+    # Should shape be transposed like this?
+    w = tf.get_variable(shape=[100000,5], dtype=tf.float32, regularizer=tf.contrib.layers.l2_regularizer(1e-3), name='w')
     out = tf.matmul(xf, w) + b      
     
     # Use softplus linearity to ensure nonnegative firing rates
@@ -131,7 +132,7 @@ def cnn(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_G
     
     return out, params
 
-def poisson_loss(logits, inputs):
+def poisson_loss(logits, labels):
     # epsilon
     epsilon = tf.constant(1e-8)
     # implement the poisson loss here
