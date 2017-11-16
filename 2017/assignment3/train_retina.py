@@ -4,11 +4,13 @@ from collections import OrderedDict
 import numpy as np
 
 import tensorflow as tf
+from tf.contrib.layers import l1_regularizer
 
 from tfutils import base, data, model, optimizer, utils
 from deepretina.metrics import cc
 import copy
 from layers import conv, fc, gaussian_noise_layer
+
 
 # toggle this to train or to validate at the end
 train_net = True
@@ -137,7 +139,10 @@ def cnn(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_G
     # final fc layer
     outputs['pred'] = fc(outputs['conv2'], 5, name = 'fc1',
         weight_decay = 1e-3, activation = 'softplus')
-    # fini
+    # just add regularization
+    regularize_activity = l1_regularizer(1e-3)
+    tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES, regularize_activity(outputs['pred']))
+    # end
     return outputs, params
 
 def poisson_loss(outputs, inputs):
