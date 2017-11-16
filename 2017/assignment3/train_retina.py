@@ -6,9 +6,7 @@ import numpy as np
 import tensorflow as tf
 
 from tfutils import base, data, model, optimizer, utils
-from deepretina.models import ln, convnet, nips_conv
 from deepretina.metrics import cc
-from keras.models import Sequential
 import copy
 from layers import conv, fc, gaussian_noise_layer
 
@@ -111,11 +109,8 @@ def ln(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_GP
     params['batch_size'] = batch_size
 
     # implement your LN model here
-    layers = ln(input_shape, NCELLS, weight_init='normal', l2_reg=l2)
-    model = Sequential(layers)
-    out = model(inputs['images'])
 
-    return out, params
+    return None
 
 def cnn(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_GPUS, seed=0, cfg_final=None):
     params = OrderedDict()
@@ -162,6 +157,7 @@ def online_agg(agg_res, res, step):
 
 def loss_metric(inputs, outputs, target, **kwargs):
     metrics_dict = {}
+    print kwargs
     metrics_dict['poisson_loss'] = mean_loss_with_reg(poisson_loss(outputs=outputs, labels=inputs[target]), **kwargs)
     return metrics_dict
 
