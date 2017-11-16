@@ -16,7 +16,8 @@ stim_type = 'whitenoise'
 #stim_type = 'naturalscene'
 # Figure out the hostname
 host = os.uname()[1]
-if 'neuroaicluster' in host:
+#if 'neuroaicluster' in host:
+if True:
     if train_net:
         print('In train mode...')
         TOTAL_BATCH_SIZE = 5000
@@ -104,7 +105,19 @@ def ln(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_GP
     params['batch_size'] = batch_size
 
     # implement your LN model here
-
+    # Use SGD
+    # Optimizer = Adam, learning rate of 1e-3
+    # L2 regularization = 1e-3 on the fully connected layer weights
+    #  w = [5,100000]
+    # b = [5]
+    
+    xf = tf.reshape(inputs['images'], [-1,100000])
+    b = tf.get_variable(shape=[5], dtype=tf.float32, regularizer=tf.contrib.layers.l2_regularizer(1e-3), name='b') 
+    w = tf.get_variable(shape=[5,100000], dtype=tf.float32, regularizer=tf.contrib.layers.l2_regularizer(1e-3), name='w')
+    out = tf.matmul(xf, w) + b      
+    
+    # Use softplus linearity to ensure nonnegative firing rates
+    out = tf.nn.softplus(out)
     return out, params
 
 def cnn(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_GPUS, seed=0, cfg_final=None):
@@ -116,10 +129,17 @@ def cnn(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_G
 
     # implement your CNN here
 
+    
     return out, params
 
-def poisson_loss(logits, labels):
+def poisson_loss(logits, inputs):
+    # epsilon
+    epsilon = tf.constant(1e-8)
     # implement the poisson loss here
+    # K.mean(y_pred - y_true * K.log(y_pred + K.epsilon()), axis=-1)
+    loss = tf.reduce_mean(logits - labels * tf.log(logits + epsilon), axis=-1)
+    #loss = tf.py_func(cc, [inputs['labels'], outputs['pred']], tf.float32)
+    return loss
 
 def mean_loss_with_reg(loss):
     return tf.reduce_mean(loss) + tf.add_n(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
@@ -133,7 +153,7 @@ def online_agg(agg_res, res, step):
 
 def loss_metric(inputs, outputs, target, **kwargs):
     metrics_dict = {}
-    metrics_dict['poisson_loss'] = mean_loss_with_reg(poisson_loss(logits=outputs, labels=inputs[target]), **kwargs)
+    metrics_dict['poisson_loss'] = mean_loss_with_reg(poisson_loss(logits=outputs['pred'], labels=inputs[target]), **kwargs)
     return metrics_dict
 
 def mean_losses_keep_rest(step_results):
@@ -282,7 +302,12 @@ def train_ln():
     params['save_params']['collname'] = stim_type
     params['save_params']['exp_id'] = 'trainval0'
 
-    params['model_params'] = # FILL IN HERE
+    params['model_params'] = {
+        'func': ln,
+        'num_gpus': NUM_GPUS,
+        'devices': DEVICES,
+        'prefix': MODEL_PREFIX
+    }
     params['learning_rate_params']['learning_rate'] = 1e-3
     base.train_from_params(**params)
 
@@ -292,11 +317,17 @@ def train_cnn():
     params['save_params']['collname'] = stim_type
     params['save_params']['exp_id'] = 'trainval0'
 
-    params['model_params'] = # FILL IN HERE
+    # TODO: double check these
+    params['model_params'] = {
+        'func': cnn,
+        'num_gpus': NUM_GPUS,
+        'devices': DEVICES,
+        'prefix': MODEL_PREFIX
+    }
     params['learning_rate_params']['learning_rate'] = 1e-3
     base.train_from_params(**params)
  
 if __name__ == '__main__':
     # train_cnn
-    # train_ln
+    train_ln
 
