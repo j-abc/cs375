@@ -183,7 +183,7 @@ def mean_losses_keep_rest(step_results):
 default_params = {
     'save_params': {
         'host': 'localhost',
-        'port': 27017,
+        'port': 24444,
         'dbname': 'deepretina',
         'collname': stim_type,
         'exp_id': 'trainval0',
