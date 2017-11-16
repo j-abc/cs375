@@ -161,15 +161,24 @@ def mean_loss_with_reg(loss):
     return tf.reduce_mean(loss) + tf.add_n(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
 
 def online_agg(agg_res, res, step):
+    special_k = ['pred', 'labels']
     if agg_res is None:
-        agg_res = {k: [] for k in res}
+        agg_res = {k: [] if k not in special_k else k: None for k in res}
     for k, v in res.items():
-        agg_res[k].append(np.mean(v))
+        if k not in special_k:
+            agg_res[k].append(np.mean(v))
+        else:
+            if agg_res[k] is None:
+                agg_res[k] = v
+            else:
+                agg_res[k] = np.concatenate((agg_res[k], v), axis=0)
     return agg_res
 
 def loss_metric(inputs, outputs, target, **kwargs):
     metrics_dict = {}
     metrics_dict['poisson_loss'] = mean_loss_with_reg(poisson_loss(outputs=outputs, inputs=inputs[target]), **kwargs)
+    metrics_dict['pred'] = outputs['pred']
+    metrics_dict['labels'] = inputs[target]
     return metrics_dict
 
 def mean_losses_keep_rest(step_results):
@@ -184,7 +193,9 @@ def mean_losses_keep_rest(step_results):
             retval[k] = plucked
     return retval
 
-
+def pearson_agg_func(x):
+    pearson = cc(x['labels'].T, x['pred'].T)
+    return pearson
 
 # model parameters
 
