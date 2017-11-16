@@ -145,7 +145,12 @@ def poisson_loss(outputs, inputs):
     epsilon = tf.constant(1e-8)
     # implement the poisson loss here
     # K.mean(y_pred - y_true * K.log(y_pred + K.epsilon()), axis=-1)
-    loss = tf.reduce_mean(outputs['pred'] - inputs['labels'] * tf.log(outputs['pred'] + epsilon), axis=-1)
+    try:
+        loss = tf.reduce_mean(outputs['pred'] - inputs['labels'] * tf.log(outputs['pred'] + epsilon), axis=-1)
+    except Exception e:
+        o =  type(outputs['pred'])
+        i = type(inputs['labels'])
+        raise Exception('output: '+ o + '; input: ' + i)
     #loss = tf.py_func(cc, [inputs['labels'], outputs['pred']], tf.float32)
     return loss
 
