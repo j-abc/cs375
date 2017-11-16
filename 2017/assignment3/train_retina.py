@@ -10,6 +10,8 @@ from deepretina.metrics import cc
 import copy
 from layers import conv, fc, gaussian_noise_layer
 
+# group 6
+seed = 6
 
 # toggle this to train or to validate at the end
 train_net = True
@@ -64,6 +66,8 @@ IMAGE_SIZE_RESIZE = 50
 NCELLS = 5
 
 DATA_PATH = '/datasets/deepretina_data/tf_records/' + stim_type
+WHITE_DATA_PATH = '/datasets/deepretina_data/tf_records/' + 'whitenoise'
+NATURAL_DATA_PATH = '/datasets/deepretina_data/tf_records/' + 'naturalscene'
 print('Data path: ', DATA_PATH)
 
 # data provider
@@ -228,7 +232,7 @@ default_params = {
             'batch_size': OUTPUT_BATCH_SIZE,
             'capacity': 11*INPUT_BATCH_SIZE,
             'min_after_dequeue': 10*INPUT_BATCH_SIZE,
-            'seed': 0,
+            'seed': seed,
         },
         'thres_loss': float('inf'),
         'num_steps': 50 * NUM_BATCHES_PER_EPOCH,  # number of steps to train
@@ -261,10 +265,10 @@ default_params = {
     },
 
     'validation_params': {
-        'test_loss': {
+        'white_test_loss': {
             'data_params': {
                 'func': retinaTF,
-                'source_dirs': [os.path.join(DATA_PATH, 'images'), os.path.join(DATA_PATH, 'labels')],
+                'source_dirs': [os.path.join(WHITE_DATA_PATH, 'images'), os.path.join(WHITE_DATA_PATH, 'labels')],
                 'resize': IMAGE_SIZE_RESIZE,
                 'batch_size': INPUT_BATCH_SIZE,
                 'file_pattern': 'test*.tfrecords',
@@ -279,9 +283,33 @@ default_params = {
                 'batch_size': MB_SIZE,
                 'capacity': 11*INPUT_BATCH_SIZE,
                 'min_after_dequeue': 10*INPUT_BATCH_SIZE,
-                'seed': 0,
+                'seed': seed,
             },
-            'num_steps': N_TEST // MB_SIZE + 1,
+            'num_steps': 5957 // MB_SIZE + 1,
+            'agg_func': lambda x: {k: np.mean(v) for k, v in x.items()},
+            'online_agg_func': online_agg
+        },
+        'natural_test_loss': {
+            'data_params': {
+                'func': retinaTF,
+                'source_dirs': [os.path.join(NATURAL_DATA_PATH, 'images'), os.path.join(NATURAL_DATA_PATH, 'labels')],
+                'resize': IMAGE_SIZE_RESIZE,
+                'batch_size': INPUT_BATCH_SIZE,
+                'file_pattern': 'test*.tfrecords',
+                'n_threads': 4
+            },
+            'targets': {
+                'func': loss_metric,
+                'target': 'labels',
+            },
+            'queue_params': {
+                'queue_type': 'fifo',
+                'batch_size': MB_SIZE,
+                'capacity': 11*INPUT_BATCH_SIZE,
+                'min_after_dequeue': 10*INPUT_BATCH_SIZE,
+                'seed': seed,
+            },
+            'num_steps': 5956 // MB_SIZE + 1,
             'agg_func': lambda x: {k: np.mean(v) for k, v in x.items()},
             'online_agg_func': online_agg
         },
@@ -303,7 +331,7 @@ default_params = {
                 'batch_size': MB_SIZE,
                 'capacity': 11*INPUT_BATCH_SIZE,
                 'min_after_dequeue': 10*INPUT_BATCH_SIZE,
-                'seed': 0,
+                'seed': seed,
             },
             'num_steps': N_TRAIN // OUTPUT_BATCH_SIZE + 1,
             'agg_func': lambda x: {k: np.mean(v) for k, v in x.items()},
@@ -314,7 +342,23 @@ default_params = {
     'log_device_placement': False,  # if variable placement has to be logged
 }
 
-def train_ln():
+
+def get_stim_params(stim_type):
+    if stim_type == 'whitenoise':
+        N_TRAIN = 323762
+        N_TEST = 5957
+    else:
+        N_TRAIN = 323756
+        N_TEST = 5956
+    DATA_PATH = '/datasets/deepretina_data/tf_records/' + stim_type
+    return {
+        'N_TRAIN': N_TRAIN,
+        'DATA_PATH': DATA_PATH
+    }
+
+
+
+def train_ln(stim_type = 'whitenoise'):
     params = copy.deepcopy(default_params)
     params['save_params']['dbname'] = 'ln_model'
     params['save_params']['collname'] = stim_type
@@ -324,14 +368,21 @@ def train_ln():
     params['learning_rate_params']['learning_rate'] = 1e-3
     base.train_from_params(**params)
 
-def train_cnn():
+def train_cnn(stim_type = 'whitenoise'):
     params = copy.deepcopy(default_params)
     params['save_params']['dbname'] = 'cnn'
     params['save_params']['collname'] = stim_type
-    params['save_params']['exp_id'] = 'trainval0'
+    params['save_params']['exp_id'] = 'trainval1'
 
     params['model_params']['func'] = cnn
     params['learning_rate_params']['learning_rate'] = 1e-3
+
+    # custom crap for the train stim type
+    stim_params = get_stim_params(stim_type)
+    params['train_params']['data_params']['source_dirs'] = stim_params['DATA_PATH']
+    NUM_BATCHES_PER_EPOCH = stim_params['N_TRAIN'] // OUTPUT_BATCH_SIZE
+    params['train_params']['num_steps'] = 50 * NUM_BATCHES_PER_EPOCH
+    params['learning_rate_params']['decay_steps'] = NUM_BATCHES_PER_EPOCH
     base.train_from_params(**params)
  
 if __name__ == '__main__':
