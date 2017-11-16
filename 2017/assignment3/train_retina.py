@@ -150,7 +150,7 @@ def poisson_loss(outputs, inputs):
     except:
         o =  type(outputs['pred'])
         i = type(inputs)
-        raise Exception('output: '+ o + '; input: ' + i)
+        raise Exception('output: '+ str(o) + '; input: ' + str(i))
     #loss = tf.py_func(cc, [inputs['labels'], outputs['pred']], tf.float32)
     return loss
 
