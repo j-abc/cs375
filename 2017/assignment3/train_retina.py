@@ -157,7 +157,7 @@ def online_agg(agg_res, res, step):
 
 def loss_metric(inputs, outputs, target, **kwargs):
     metrics_dict = {}
-    print kwargs
+    print(kwargs)
     metrics_dict['poisson_loss'] = mean_loss_with_reg(poisson_loss(outputs=outputs, labels=inputs[target]), **kwargs)
     return metrics_dict
 
