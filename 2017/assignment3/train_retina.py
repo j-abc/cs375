@@ -147,7 +147,7 @@ def poisson_loss(outputs, inputs):
     # K.mean(y_pred - y_true * K.log(y_pred + K.epsilon()), axis=-1)
     try:
         loss = tf.reduce_mean(outputs['pred'] - inputs['labels'] * tf.log(outputs['pred'] + epsilon), axis=-1)
-    except Exception e:
+    except:
         o =  type(outputs['pred'])
         i = type(inputs['labels'])
         raise Exception('output: '+ o + '; input: ' + i)
