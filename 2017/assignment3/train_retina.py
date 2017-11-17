@@ -9,7 +9,6 @@ from tfutils import base, data, model, optimizer, utils
 from deepretina.metrics import cc
 import copy
 from layers import conv, fc, gaussian_noise_layer
-
 # group 6
 seed = 6
 
@@ -114,8 +113,23 @@ def ln(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_GP
     params['batch_size'] = batch_size
 
     # implement your LN model here
-
-    return None
+    # Use SGD
+    # Optimizer = Adam, learning rate of 1e-3
+    # L2 regularization = 1e-3 on the fully connected layer weights
+    #  w = [5,100000]
+    # b = [5]
+    
+    xf = tf.reshape(inputs['images'], [-1,100000])
+    b = tf.get_variable(shape=[5], dtype=tf.float32, regularizer=tf.contrib.layers.l2_regularizer(1e-3), name='b') 
+    # Should shape be transposed like this?
+    w = tf.get_variable(shape=[100000,5], dtype=tf.float32, regularizer=tf.contrib.layers.l2_regularizer(1e-3), name='w')
+    out = tf.matmul(xf, w) + b      
+    
+    # Use softplus linearity to ensure nonnegative firing rates
+    out = tf.nn.softplus(out)
+    outputs = {}
+    outputs['pred'] = out
+    return outputs, params
 
 def cnn(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_GPUS, seed=0, cfg_final=None):
     params = OrderedDict()
@@ -174,12 +188,41 @@ def online_agg(agg_res, res, step):
                 agg_res[k] = np.concatenate((agg_res[k], v), axis=0)
     return agg_res
 
+def my_online_agg(agg_res, res, step):
+    if agg_res is None:
+        agg_res = {k: [] for k in res}
+    for k, v in res.items():
+        agg_res[k].append(v)
+    return agg_res
+
+def get_pearson(pred, truth):
+    y_hat_mu = pred - np.mean(pred, axis=0, keepdims=True)
+    y_mu = truth - np.mean(truth, axis=0, keepdims=True)    
+    y_hat_std = np.std(pred, axis=0, keepdims=True)
+    y_std = np.std(truth, axis=0, keepdims=True)
+    corr = np.mean(y_mu * y_hat_mu, axis=0, keepdims=True)/(y_std * y_hat_std)
+    return corr
+
+def pearson_agg(results):
+    for k,v in results.iteritems():
+        results[k] = np.concatenate(v, axis=0)
+        
+    testcorrs = {}
+    testcorrs['corr'] = get_pearson(results['pred'], results['label'])
+       
+    return testcorrs
+
 def loss_metric(inputs, outputs, target, **kwargs):
     metrics_dict = {}
     metrics_dict['poisson_loss'] = mean_loss_with_reg(poisson_loss(outputs=outputs, inputs=inputs[target]), **kwargs)
-    metrics_dict['pred'] = outputs['pred']
-    metrics_dict['labels'] = inputs[target]
     return metrics_dict
+
+def get_targets(inputs, outputs, target, **kwargs):
+    targets_dict = {}
+    targets_dict['pred'] = outputs['pred']
+    targets_dict['label'] = inputs[target]
+    
+    return targets_dict
 
 def mean_losses_keep_rest(step_results):
     retval = {}
@@ -192,10 +235,6 @@ def mean_losses_keep_rest(step_results):
         else:
             retval[k] = plucked
     return retval
-
-def pearson_agg_func(x):
-    pearson = cc(x['labels'].T, x['pred'].T)
-    return pearson
 
 # model parameters
 
@@ -276,17 +315,17 @@ default_params = {
     },
 
     'validation_params': {
-        'white_test_loss': {
+        'white_noise_testcorr': {
             'data_params': {
                 'func': retinaTF,
-                'source_dirs': [os.path.join(WHITE_DATA_PATH, 'images'), os.path.join(WHITE_DATA_PATH, 'labels')],
+                'source_dirs': [os.path.join('/datasets/deepretina_data/tf_records/whitenoise', 'images'), os.path.join('/datasets/deepretina_data/tf_records/whitenoise', 'labels')],
                 'resize': IMAGE_SIZE_RESIZE,
                 'batch_size': INPUT_BATCH_SIZE,
                 'file_pattern': 'test*.tfrecords',
-                'n_threads': 4
+                'n_threads': 1
             },
             'targets': {
-                'func': loss_metric,
+                'func': get_targets,
                 'target': 'labels',
             },
             'queue_params': {
@@ -294,23 +333,23 @@ default_params = {
                 'batch_size': MB_SIZE,
                 'capacity': 11*INPUT_BATCH_SIZE,
                 'min_after_dequeue': 10*INPUT_BATCH_SIZE,
-                'seed': seed,
+                'seed': 0,
             },
             'num_steps': 5957 // MB_SIZE + 1,
-            'agg_func': lambda x: {k: np.mean(v) for k, v in x.items()},
-            'online_agg_func': online_agg
+            'agg_func': pearson_agg,   # lambda x: {k: np.mean(v) for k, v in x.items()},
+            'online_agg_func': my_online_agg
         },
-        'natural_test_loss': {
+        'natural_scenes_testcorr': {
             'data_params': {
                 'func': retinaTF,
-                'source_dirs': [os.path.join(NATURAL_DATA_PATH, 'images'), os.path.join(NATURAL_DATA_PATH, 'labels')],
+                'source_dirs': [os.path.join('/datasets/deepretina_data/tf_records/naturalscene', 'images'), os.path.join('/datasets/deepretina_data/tf_records/naturalscene', 'labels')],
                 'resize': IMAGE_SIZE_RESIZE,
                 'batch_size': INPUT_BATCH_SIZE,
                 'file_pattern': 'test*.tfrecords',
-                'n_threads': 4
+                'n_threads': 1
             },
             'targets': {
-                'func': loss_metric,
+                'func': get_targets,
                 'target': 'labels',
             },
             'queue_params': {
@@ -318,11 +357,11 @@ default_params = {
                 'batch_size': MB_SIZE,
                 'capacity': 11*INPUT_BATCH_SIZE,
                 'min_after_dequeue': 10*INPUT_BATCH_SIZE,
-                'seed': seed,
+                'seed': 0,
             },
             'num_steps': 5956 // MB_SIZE + 1,
-            'agg_func': lambda x: {k: np.mean(v) for k, v in x.items()},
-            'online_agg_func': online_agg
+            'agg_func': pearson_agg,   # lambda x: {k: np.mean(v) for k, v in x.items()},
+            'online_agg_func': my_online_agg
         },
         'train_loss': {
             'data_params': {
@@ -397,6 +436,6 @@ def train_cnn(stim_type = 'whitenoise'):
     base.train_from_params(**params)
  
 if __name__ == '__main__':
-    train_cnn
-    # train_ln
+    #train_cnn()
+    train_ln()
 
