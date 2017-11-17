@@ -66,8 +66,8 @@ IMAGE_SIZE_RESIZE = 50
 NCELLS = 5
 
 DATA_PATH = '/datasets/deepretina_data/tf_records/' + stim_type
-WHITE_DATA_PATH = '/datasets/deepretina_data/tf_records/' + 'whitenoise'
-NATURAL_DATA_PATH = '/datasets/deepretina_data/tf_records/' + 'naturalscenePATH'
+WHITE_DATA_PATH = '/datasets/deepretina_data/tf_records/whitenoise'
+NATURAL_DATA_PATH = '/datasets/deepretina_data/tf_records/naturalscene'
 print('Data path: ', DATA_PATH)
 
 # data provider
