@@ -24,6 +24,9 @@ E = np.array([
 print 'cc results in: ', cc(D.T,E.T)
 print 'get_pearson results in: ', get_pearson(D,E)
 
+print 'cc results in: ', cc(D,E)
+print 'get_pearson results in: ', get_pearson(D.T,E.T)
+
 print 
 
 mean_loss, loss = tf.py_func(cc, [A, B], [tf.float32,tf.float32])
