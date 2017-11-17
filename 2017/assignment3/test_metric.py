@@ -22,7 +22,7 @@ E = np.array([
 	])
 
 print 'cc results in: ', cc(D,E)
-print 'get_pearson results in: ', get_pearson(C,D)
+print 'get_pearson results in: ', get_pearson(D,E)
 
 print 
 
