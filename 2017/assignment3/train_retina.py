@@ -418,7 +418,7 @@ def train_ln(stim_type = 'whitenoise'):
     # custom crap for the train stim type
     stim_params = get_stim_params(stim_type)
     params['train_params']['data_params']['source_dirs'] = [os.path.join(stim_params['DATA_PATH'], 'images'), os.path.join(stim_params['DATA_PATH'], 'labels')]
-    params['validation_params']['train_loss']['data_params']['source_dirs'] = [os.path.join(stim_params['DATA_PATH'], 'images'), os.path.join(stim_params['DATA_PATH'], 'labels')]
+    #params['validation_params']['train_loss']['data_params']['source_dirs'] = [os.path.join(stim_params['DATA_PATH'], 'images'), os.path.join(stim_params['DATA_PATH'], 'labels')]
     NUM_BATCHES_PER_EPOCH = stim_params['N_TRAIN'] // OUTPUT_BATCH_SIZE
     params['train_params']['num_steps'] = 50 * NUM_BATCHES_PER_EPOCH
     params['learning_rate_params']['decay_steps'] = NUM_BATCHES_PER_EPOCH
@@ -436,7 +436,7 @@ def train_cnn(stim_type = 'whitenoise'):
     # custom crap for the train stim type
     stim_params = get_stim_params(stim_type)
     params['train_params']['data_params']['source_dirs'] = [os.path.join(stim_params['DATA_PATH'], 'images'), os.path.join(stim_params['DATA_PATH'], 'labels')] 
-    params['validation_params']['train_loss']['data_params']['source_dirs'] = [os.path.join(stim_params['DATA_PATH'], 'images'), os.path.join(stim_params['DATA_PATH'], 'labels')] 
+    #params['validation_params']['train_loss']['data_params']['source_dirs'] = [os.path.join(stim_params['DATA_PATH'], 'images'), os.path.join(stim_params['DATA_PATH'], 'labels')] 
     NUM_BATCHES_PER_EPOCH = stim_params['N_TRAIN'] // OUTPUT_BATCH_SIZE
     params['train_params']['num_steps'] = 50 * NUM_BATCHES_PER_EPOCH
     params['learning_rate_params']['decay_steps'] = NUM_BATCHES_PER_EPOCH
