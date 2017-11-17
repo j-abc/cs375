@@ -21,7 +21,7 @@ E = np.array([
 	[3.,4.5,5.5]
 	])
 
-print 'cc results in: ', cc(D,E)
+print 'cc results in: ', cc(D.T,E.T)
 print 'get_pearson results in: ', get_pearson(D,E)
 
 print 
