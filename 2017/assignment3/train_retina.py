@@ -9,6 +9,8 @@ from tfutils import base, data, model, optimizer, utils
 from deepretina.metrics import cc
 import copy
 from layers import conv, fc, gaussian_noise_layer
+# group 6
+seed = 6
 
 # toggle this to train or to validate at the end
 train_net = True
@@ -54,7 +56,7 @@ else:
     N_TRAIN = 323756
     N_TEST = 5956
 
-INPUT_BATCH_SIZE = 1024 # queue size
+INPUT_BATCH_SIZE = 1024 / 2 # queue size
 OUTPUT_BATCH_SIZE = TOTAL_BATCH_SIZE
 print('TOTAL BATCH SIZE:', OUTPUT_BATCH_SIZE)
 NUM_BATCHES_PER_EPOCH = N_TRAIN // OUTPUT_BATCH_SIZE
@@ -63,6 +65,8 @@ IMAGE_SIZE_RESIZE = 50
 NCELLS = 5
 
 DATA_PATH = '/datasets/deepretina_data/tf_records/' + stim_type
+WHITE_DATA_PATH = '/datasets/deepretina_data/tf_records/whitenoise'
+NATURAL_DATA_PATH = '/datasets/deepretina_data/tf_records/naturalscene'
 print('Data path: ', DATA_PATH)
 
 # data provider
@@ -102,7 +106,8 @@ class retinaTF(data.TFRecordsParallelByFileProvider):
 
 def ln(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_GPUS, seed=0, cfg_final=None):
     params = OrderedDict()
-    batch_size = inputs['images'].get_shape().as_list()[0]
+    input_shape = inputs['images'].get_shape().as_list()
+    batch_size = input_shape[0]
     params['stim_type'] = stim_type
     params['train'] = train
     params['batch_size'] = batch_size
@@ -151,7 +156,10 @@ def cnn(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_G
     # final fc layer
     outputs['pred'] = fc(outputs['conv2'], 5, name = 'fc1',
         weight_decay = 1e-3, activation = 'softplus')
-    # fini
+    # just add regularization
+    regularize_activity = tf.contrib.layers.l1_regularizer (1e-3)
+    tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES, regularize_activity(outputs['pred']))
+    # end
     return outputs, params
 
 def poisson_loss(outputs, inputs):
@@ -167,10 +175,17 @@ def mean_loss_with_reg(loss):
     return tf.reduce_mean(loss) + tf.add_n(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
 
 def online_agg(agg_res, res, step):
+    special_k = ['pred', 'labels']
     if agg_res is None:
-        agg_res = {k: [] for k in res}
+        agg_res = {k: [] if k not in special_k else None for k in res}
     for k, v in res.items():
-        agg_res[k].append(np.mean(v))
+        if k not in special_k:
+            agg_res[k].append(np.mean(v))
+        else:
+            if agg_res[k] is None:
+                agg_res[k] = v
+            else:
+                agg_res[k] = np.concatenate((agg_res[k], v), axis=0)
     return agg_res
 
 def my_online_agg(agg_res, res, step):
@@ -221,8 +236,6 @@ def mean_losses_keep_rest(step_results):
             retval[k] = plucked
     return retval
 
-
-
 # model parameters
 
 default_params = {
@@ -269,7 +282,7 @@ default_params = {
             'batch_size': OUTPUT_BATCH_SIZE,
             'capacity': 11*INPUT_BATCH_SIZE,
             'min_after_dequeue': 10*INPUT_BATCH_SIZE,
-            'seed': 0,
+            'seed': seed,
         },
         'thres_loss': float('inf'),
         'num_steps': 50 * NUM_BATCHES_PER_EPOCH,  # number of steps to train
@@ -350,30 +363,6 @@ default_params = {
             'agg_func': pearson_agg,   # lambda x: {k: np.mean(v) for k, v in x.items()},
             'online_agg_func': my_online_agg
         },
-        'test_loss': {
-            'data_params': {
-                'func': retinaTF,
-                'source_dirs': [os.path.join(DATA_PATH, 'images'), os.path.join(DATA_PATH, 'labels')],
-                'resize': IMAGE_SIZE_RESIZE,
-                'batch_size': INPUT_BATCH_SIZE,
-                'file_pattern': 'test*.tfrecords',
-                'n_threads': 4
-            },
-            'targets': {
-                'func': loss_metric,
-                'target': 'labels',
-            },
-            'queue_params': {
-                'queue_type': 'fifo',
-                'batch_size': MB_SIZE,
-                'capacity': 11*INPUT_BATCH_SIZE,
-                'min_after_dequeue': 10*INPUT_BATCH_SIZE,
-                'seed': 0,
-            },
-            'num_steps': N_TEST // MB_SIZE + 1,
-            'agg_func': lambda x: {k: np.mean(v) for k, v in x.items()},
-            'online_agg_func': online_agg
-        },
         'train_loss': {
             'data_params': {
                 'func': retinaTF,
@@ -392,7 +381,7 @@ default_params = {
                 'batch_size': MB_SIZE,
                 'capacity': 11*INPUT_BATCH_SIZE,
                 'min_after_dequeue': 10*INPUT_BATCH_SIZE,
-                'seed': 0,
+                'seed': seed,
             },
             'num_steps': N_TRAIN // OUTPUT_BATCH_SIZE + 1,
             'agg_func': lambda x: {k: np.mean(v) for k, v in x.items()},
@@ -403,7 +392,22 @@ default_params = {
     'log_device_placement': False,  # if variable placement has to be logged
 }
 
-def train_ln():
+
+def get_stim_params(stim_type):
+    if stim_type == 'whitenoise':
+        N_TRAIN = 323762
+        N_TEST = 5957
+    else:
+        N_TRAIN = 323756
+        N_TEST = 5956
+    return {
+        'N_TRAIN': N_TRAIN,
+        'DATA_PATH': '/datasets/deepretina_data/tf_records/' + stim_type
+    }
+
+
+
+def train_ln(stim_type = 'whitenoise'):
     params = copy.deepcopy(default_params)
     params['save_params']['dbname'] = 'ln_model'
     params['save_params']['collname'] = stim_type
@@ -413,18 +417,25 @@ def train_ln():
     params['learning_rate_params']['learning_rate'] = 1e-3
     base.train_from_params(**params)
 
-def train_cnn():
+def train_cnn(stim_type = 'whitenoise'):
     params = copy.deepcopy(default_params)
     params['save_params']['dbname'] = 'cnn'
     params['save_params']['collname'] = stim_type
-    params['save_params']['exp_id'] = 'trainval0'
+    params['save_params']['exp_id'] = 'trainval1'
 
     params['model_params']['func'] = cnn
     params['learning_rate_params']['learning_rate'] = 1e-3
+
+    # custom crap for the train stim type
+    stim_params = get_stim_params(stim_type)
+    params['train_params']['data_params']['source_dirs'] = [os.path.join(stim_params['DATA_PATH'], 'images'), os.path.join(stim_params['DATA_PATH'], 'labels')] 
+    params['validation_params']['train_loss']['data_params']['source_dirs'] = [os.path.join(stim_params['DATA_PATH'], 'images'), os.path.join(stim_params['DATA_PATH'], 'labels')] 
+    NUM_BATCHES_PER_EPOCH = stim_params['N_TRAIN'] // OUTPUT_BATCH_SIZE
+    params['train_params']['num_steps'] = 50 * NUM_BATCHES_PER_EPOCH
+    params['learning_rate_params']['decay_steps'] = NUM_BATCHES_PER_EPOCH
     base.train_from_params(**params)
  
 if __name__ == '__main__':
     #train_cnn()
     train_ln()
-
 
