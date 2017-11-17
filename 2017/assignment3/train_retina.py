@@ -6,8 +6,9 @@ import numpy as np
 import tensorflow as tf
 
 from tfutils import base, data, model, optimizer, utils
-
+from deepretina.metrics import cc
 import copy
+from layers import conv, fc, gaussian_noise_layer
 
 # toggle this to train or to validate at the end
 train_net = True
@@ -16,7 +17,8 @@ stim_type = 'whitenoise'
 #stim_type = 'naturalscene'
 # Figure out the hostname
 host = os.uname()[1]
-if True:  #'neuroaicluster' in host:
+#if 'neuroaicluster' in host:
+if True: # the line above seemed useless
     if train_net:
         print('In train mode...')
         TOTAL_BATCH_SIZE = 5000
@@ -57,6 +59,8 @@ OUTPUT_BATCH_SIZE = TOTAL_BATCH_SIZE
 print('TOTAL BATCH SIZE:', OUTPUT_BATCH_SIZE)
 NUM_BATCHES_PER_EPOCH = N_TRAIN // OUTPUT_BATCH_SIZE
 IMAGE_SIZE_RESIZE = 50
+
+NCELLS = 5
 
 DATA_PATH = '/datasets/deepretina_data/tf_records/' + stim_type
 print('Data path: ', DATA_PATH)
@@ -118,26 +122,44 @@ def ln(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_GP
     
     # Use softplus linearity to ensure nonnegative firing rates
     out = tf.nn.softplus(out)
-    return out, params
+    outputs = {}
+    outputs['pred'] = out
+    return outputs, params
 
 def cnn(inputs, train=True, prefix=MODEL_PREFIX, devices=DEVICES, num_gpus=NUM_GPUS, seed=0, cfg_final=None):
     params = OrderedDict()
-    batch_size = inputs['images'].get_shape().as_list()[0]
+    input_shape = inputs['images'].get_shape().as_list()
+    batch_size = input_shape[0]
     params['stim_type'] = stim_type
     params['train'] = train
     params['batch_size'] = batch_size
 
-    # implement your CNN here
+    #start
+    outputs = inputs
+    # first conv layer
+    outputs['conv1'] = conv(outputs['images'], 16, 15, name = 'conv1',
+        padding = 'VALID', batch_norm = False, weight_decay = 1e-3)
+    # gaussian noise
+    if train:
+        outputs['conv1'] = gaussian_noise_layer(outputs['conv1'], 0.1)
+    # second layer
+    outputs['conv2'] = conv(outputs['conv1'], 8, 9, name = 'conv2',
+        padding = 'VALID', batch_norm = False, weight_decay = 1e-3)
+    # gaussian noise
+    if train:
+        outputs['conv2'] = gaussian_noise_layer(outputs['conv2'], 0.1)
+    # final fc layer
+    outputs['pred'] = fc(outputs['conv2'], 5, name = 'fc1',
+        weight_decay = 1e-3, activation = 'softplus')
+    # fini
+    return outputs, params
 
-    
-    return out, params
-
-def poisson_loss(logits, labels):
+def poisson_loss(outputs, inputs):
     # epsilon
     epsilon = tf.constant(1e-8)
     # implement the poisson loss here
     # K.mean(y_pred - y_true * K.log(y_pred + K.epsilon()), axis=-1)
-    loss = tf.reduce_mean(logits - labels * tf.log(logits + epsilon), axis=-1)
+    loss = tf.reduce_mean(outputs['pred'] - inputs * tf.log(outputs['pred'] + epsilon), axis=-1)
     #loss = tf.py_func(cc, [inputs['labels'], outputs['pred']], tf.float32)
     return loss
 
@@ -151,10 +173,41 @@ def online_agg(agg_res, res, step):
         agg_res[k].append(np.mean(v))
     return agg_res
 
+def my_online_agg(agg_res, res, step):
+    if agg_res is None:
+        agg_res = {k: [] for k in res}
+    for k, v in res.items():
+        agg_res[k].append(v)
+    return agg_res
+
+def get_pearson(pred, truth):
+    y_hat_mu = pred - np.mean(pred, axis=0, keepdims=True)
+    y_mu = truth - np.mean(truth, axis=0, keepdims=True)    
+    y_hat_std = np.std(pred, axis=0, keepdims=True)
+    y_std = np.std(truth, axis=0, keepdims=True)
+    corr = np.mean(y_mu * y_hat_mu, axis=0, keepdims=True)/(y_std * y_hat_std)
+    return corr
+
+def pearson_agg(results):
+    for k,v in results.iteritems():
+        results[k] = np.concatenate(v, axis=0)
+        
+    testcorrs = {}
+    testcorrs['corr'] = get_pearson(results['pred'], results['label'])
+       
+    return testcorrs
+
 def loss_metric(inputs, outputs, target, **kwargs):
     metrics_dict = {}
-    metrics_dict['poisson_loss'] = mean_loss_with_reg(poisson_loss(logits=outputs['pred'], labels=inputs[target]), **kwargs)
+    metrics_dict['poisson_loss'] = mean_loss_with_reg(poisson_loss(outputs=outputs, inputs=inputs[target]), **kwargs)
     return metrics_dict
+
+def get_targets(inputs, outputs, target, **kwargs):
+    targets_dict = {}
+    targets_dict['pred'] = outputs['pred']
+    targets_dict['label'] = inputs[target]
+    
+    return targets_dict
 
 def mean_losses_keep_rest(step_results):
     retval = {}
@@ -167,6 +220,8 @@ def mean_losses_keep_rest(step_results):
         else:
             retval[k] = plucked
     return retval
+
+
 
 # model parameters
 
@@ -224,7 +279,11 @@ default_params = {
     'loss_params': {
         'targets': ['labels'],
         'agg_func': mean_loss_with_reg,
-        'loss_per_case_func': poisson_loss
+        'loss_per_case_func': poisson_loss,
+        'loss_per_case_func_params' : {
+                '_outputs': 'outputs', 
+                '_targets_$all': 'inputs',
+        },
     },
 
     'learning_rate_params': {
@@ -243,6 +302,54 @@ default_params = {
     },
 
     'validation_params': {
+        'white_noise_testcorr': {
+            'data_params': {
+                'func': retinaTF,
+                'source_dirs': [os.path.join('/datasets/deepretina_data/tf_records/whitenoise', 'images'), os.path.join('/datasets/deepretina_data/tf_records/whitenoise', 'labels')],
+                'resize': IMAGE_SIZE_RESIZE,
+                'batch_size': INPUT_BATCH_SIZE,
+                'file_pattern': 'test*.tfrecords',
+                'n_threads': 1
+            },
+            'targets': {
+                'func': get_targets,
+                'target': 'labels',
+            },
+            'queue_params': {
+                'queue_type': 'fifo',
+                'batch_size': MB_SIZE,
+                'capacity': 11*INPUT_BATCH_SIZE,
+                'min_after_dequeue': 10*INPUT_BATCH_SIZE,
+                'seed': 0,
+            },
+            'num_steps': 5957 // MB_SIZE + 1,
+            'agg_func': pearson_agg,   # lambda x: {k: np.mean(v) for k, v in x.items()},
+            'online_agg_func': my_online_agg
+        },
+        'natural_scenes_testcorr': {
+            'data_params': {
+                'func': retinaTF,
+                'source_dirs': [os.path.join('/datasets/deepretina_data/tf_records/naturalscene', 'images'), os.path.join('/datasets/deepretina_data/tf_records/naturalscene', 'labels')],
+                'resize': IMAGE_SIZE_RESIZE,
+                'batch_size': INPUT_BATCH_SIZE,
+                'file_pattern': 'test*.tfrecords',
+                'n_threads': 1
+            },
+            'targets': {
+                'func': get_targets,
+                'target': 'labels',
+            },
+            'queue_params': {
+                'queue_type': 'fifo',
+                'batch_size': MB_SIZE,
+                'capacity': 11*INPUT_BATCH_SIZE,
+                'min_after_dequeue': 10*INPUT_BATCH_SIZE,
+                'seed': 0,
+            },
+            'num_steps': 5956 // MB_SIZE + 1,
+            'agg_func': pearson_agg,   # lambda x: {k: np.mean(v) for k, v in x.items()},
+            'online_agg_func': my_online_agg
+        },
         'test_loss': {
             'data_params': {
                 'func': retinaTF,
@@ -302,12 +409,7 @@ def train_ln():
     params['save_params']['collname'] = stim_type
     params['save_params']['exp_id'] = 'trainval0'
 
-    params['model_params'] = {
-        'func': ln,
-        'num_gpus': NUM_GPUS,
-        'devices': DEVICES,
-        'prefix': MODEL_PREFIX
-    }
+    params['model_params']['func'] = ln
     params['learning_rate_params']['learning_rate'] = 1e-3
     base.train_from_params(**params)
 
@@ -317,17 +419,12 @@ def train_cnn():
     params['save_params']['collname'] = stim_type
     params['save_params']['exp_id'] = 'trainval0'
 
-    # TODO: double check these
-    params['model_params'] = {
-        'func': cnn,
-        'num_gpus': NUM_GPUS,
-        'devices': DEVICES,
-        'prefix': MODEL_PREFIX
-    }
+    params['model_params']['func'] = cnn
     params['learning_rate_params']['learning_rate'] = 1e-3
     base.train_from_params(**params)
  
 if __name__ == '__main__':
     #train_cnn()
     train_ln()
+
 
