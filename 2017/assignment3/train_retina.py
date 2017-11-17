@@ -25,17 +25,17 @@ if True: # the line above seemed useless
         print('In train mode...')
         TOTAL_BATCH_SIZE = 5000
         MB_SIZE = 5000
-        NUM_GPUS = 1
+        NUM_GPUS = 2
     else:
         print('In val mode...')
         if stim_type == 'whitenoise':
             TOTAL_BATCH_SIZE = 5957
             MB_SIZE = 5957
-            NUM_GPUS = 1
+            NUM_GPUS = 2
         else:
             TOTAL_BATCH_SIZE = 5956
             MB_SIZE = 5956
-            NUM_GPUS = 1
+            NUM_GPUS = 2
 
 else:
     print("Data path not found!!")
@@ -256,7 +256,7 @@ default_params = {
     },
 
     'load_params': {
-        'do_restore': False,
+        'do_restore': True,
         'query': None
     },
 
