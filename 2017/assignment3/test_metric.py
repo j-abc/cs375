@@ -1,5 +1,6 @@
 import tensorflow as tf
 from deepretina.metrics import cc
+from train_retina import get_pearson
 import numpy as np
 
 A = tf.constant([
@@ -20,7 +21,10 @@ E = np.array([
 	[3.,4.5,5.5]
 	])
 
-print cc(D,E)
+print 'cc results in: ', cc(D,E)
+print 'get_pearson results in: ', get_pearson(C,D)
+
+print 
 
 mean_loss, loss = tf.py_func(cc, [A, B], [tf.float32,tf.float32])
 
