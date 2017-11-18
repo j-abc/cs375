@@ -363,31 +363,30 @@ default_params = {
             'agg_func': pearson_agg,   # lambda x: {k: np.mean(v) for k, v in x.items()},
             'online_agg_func': my_online_agg
         },
-        'train_loss': {
-            'data_params': {
-                'func': retinaTF,
-                'source_dirs': [os.path.join(DATA_PATH, 'images'), os.path.join(DATA_PATH, 'labels')],
-                'resize': IMAGE_SIZE_RESIZE,
-                'batch_size': INPUT_BATCH_SIZE,
-                'file_pattern': 'train*.tfrecords',
-                'n_threads': 4
-            },
-            'targets': {
-                'func': loss_metric,
-                'target': 'labels',
-            },
-            'queue_params': {
-                'queue_type': 'fifo',
-                'batch_size': MB_SIZE,
-                'capacity': 11*INPUT_BATCH_SIZE,
-                'min_after_dequeue': 10*INPUT_BATCH_SIZE,
-                'seed': seed,
-            },
-            'num_steps': N_TRAIN // OUTPUT_BATCH_SIZE + 1,
-            'agg_func': lambda x: {k: np.mean(v) for k, v in x.items()},
-            'online_agg_func': online_agg
-        }
-
+        #'train_loss': {
+        #    'data_params': {
+        #        'func': retinaTF,
+        #        'source_dirs': [os.path.join(DATA_PATH, 'images'), os.path.join(DATA_PATH, 'labels')],
+        #        'resize': IMAGE_SIZE_RESIZE,
+        #        'batch_size': INPUT_BATCH_SIZE,
+        #        'file_pattern': 'train*.tfrecords',
+        #        'n_threads': 4
+        #    },
+        #    'targets': {
+        #        'func': loss_metric,
+        #        'target': 'labels',
+        #    },
+        #    'queue_params': {
+        #        'queue_type': 'fifo',
+        #        'batch_size': MB_SIZE,
+        #        'capacity': 11*INPUT_BATCH_SIZE,
+        #        'min_after_dequeue': 10*INPUT_BATCH_SIZE,
+        #        'seed': seed,
+        #    },
+        #    'num_steps': N_TRAIN // OUTPUT_BATCH_SIZE + 1,
+        #    'agg_func': lambda x: {k: np.mean(v) for k, v in x.items()},
+        #    'online_agg_func': online_agg
+        #}
     },
     'log_device_placement': False,  # if variable placement has to be logged
 }
@@ -419,7 +418,7 @@ def train_ln(stim_type = 'whitenoise'):
     # custom crap for the train stim type
     stim_params = get_stim_params(stim_type)
     params['train_params']['data_params']['source_dirs'] = [os.path.join(stim_params['DATA_PATH'], 'images'), os.path.join(stim_params['DATA_PATH'], 'labels')]
-    params['validation_params']['train_loss']['data_params']['source_dirs'] = [os.path.join(stim_params['DATA_PATH'], 'images'), os.path.join(stim_params['DATA_PATH'], 'labels')]
+    #params['validation_params']['train_loss']['data_params']['source_dirs'] = [os.path.join(stim_params['DATA_PATH'], 'images'), os.path.join(stim_params['DATA_PATH'], 'labels')]
     NUM_BATCHES_PER_EPOCH = stim_params['N_TRAIN'] // OUTPUT_BATCH_SIZE
     params['train_params']['num_steps'] = 50 * NUM_BATCHES_PER_EPOCH
     params['learning_rate_params']['decay_steps'] = NUM_BATCHES_PER_EPOCH
@@ -437,7 +436,7 @@ def train_cnn(stim_type = 'whitenoise'):
     # custom crap for the train stim type
     stim_params = get_stim_params(stim_type)
     params['train_params']['data_params']['source_dirs'] = [os.path.join(stim_params['DATA_PATH'], 'images'), os.path.join(stim_params['DATA_PATH'], 'labels')] 
-    params['validation_params']['train_loss']['data_params']['source_dirs'] = [os.path.join(stim_params['DATA_PATH'], 'images'), os.path.join(stim_params['DATA_PATH'], 'labels')] 
+    #params['validation_params']['train_loss']['data_params']['source_dirs'] = [os.path.join(stim_params['DATA_PATH'], 'images'), os.path.join(stim_params['DATA_PATH'], 'labels')] 
     NUM_BATCHES_PER_EPOCH = stim_params['N_TRAIN'] // OUTPUT_BATCH_SIZE
     params['train_params']['num_steps'] = 50 * NUM_BATCHES_PER_EPOCH
     params['learning_rate_params']['decay_steps'] = NUM_BATCHES_PER_EPOCH
