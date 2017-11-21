@@ -4,5 +4,5 @@
     "loss_name"    : "colorful_loss",
     "exp_id"       : "experiment4",
     "run_now"      : "True",
-    "devices"      : ["/gpu:1"]
+    "devices"      : ["/gpu:0"]
 }
