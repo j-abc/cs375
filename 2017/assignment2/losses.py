@@ -6,13 +6,9 @@ from color_utils import preprocess
 def colorful_loss(inputs, outputs, **target_params):
     flat_pred = tf.reshape(outputs['conv8_313'], [-1, 313])
     flat_gt_ab_313 = tf.reshape(outputs['gt_ab_313'], [-1,313])
-    flat_rebalance = tf.reshape(outputs['prior_boost_nongray'], [-1,1])
-    test_pred = tf.reduce_sum(flat_pred, 1)
-    test_gt = tf.reduce_sum(flat_gt_ab_313, 1)
-    tf.Print(test_pred, [test_pred], message="Pred: ")
-    tf.Print(test_gt, [test_gt], message="Test: ")
+    #flat_rebalance = tf.reshape(outputs['prior_boost_nongray'], [-1,1])
     loss = tf.nn.softmax_cross_entropy_with_logits(logits=flat_pred, labels=flat_gt_ab_313)
-    loss = loss * flat_rebalance
+    #loss = loss * flat_rebalance
     # rebalance
     #dl2c = tf.gradients(g_loss, outputs['conv8_313'])
     #dl2c = tf.stop_gradient(dl2c)
