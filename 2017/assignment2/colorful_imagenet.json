@@ -2,7 +2,7 @@
 	"model_name"   : "colorful_model",
     "data_name"    : "imagenet",
     "loss_name"    : "colorful_loss",
-    "exp_id"       : "experiment3",
+    "exp_id"       : "experiment4",
     "run_now"      : "True",
-    "devices"      : ["/gpu:1"]
+    "devices"      : ["/gpu:0"]
 }
